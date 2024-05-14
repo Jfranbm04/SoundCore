@@ -138,6 +138,7 @@ fun correoContraseña() {
 fun SignUpButton() {
     val contexto = LocalContext.current
 
+
     Button(
         onClick = {
             // Ir a la página de registro
