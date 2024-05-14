@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">SoundCore</string>
+    <string name="title_activity_pantalla_principal2">pantallaPrincipal2</string>
 </resources>
