@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "341394722494",
+    "project_id": "soundcore-fbc6f",
+    "storage_bucket": "soundcore-fbc6f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:341394722494:android:00a443492eddae353cd8ef",
+        "android_client_info": {
+          "package_name": "com.example.soundcore"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDiVpOVFrJAtxAqJuZQ9Sj1PrlIIHJKa4E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
