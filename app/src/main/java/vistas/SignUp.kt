@@ -42,6 +42,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.util.PatternsCompat
+import androidx.navigation.NavController
 import com.example.soundcore.R
 import com.example.soundcore.ui.theme.azul1
 import com.example.soundcore.ui.theme.azul2
@@ -49,29 +50,30 @@ import com.example.soundcore.ui.theme.azul3
 import com.example.soundcore.ui.theme.azul4
 
 import com.google.firebase.auth.FirebaseAuth
+import modelos.Paths
 
 private lateinit var auth: FirebaseAuth
 
 @Composable
-fun SignUpScreen() {
+fun SignUpScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(8.dp)
     ) {
-        HeaderSignUp(Modifier.align(Alignment.TopCenter))
+        HeaderSignUp(Modifier.align(Alignment.TopCenter), navController)
         Spacer(modifier = Modifier.height(50.dp))
         //Body(Modifier.align(Alignment.Center))
     }
 }
 
 @Composable
-fun HeaderSignUp(modifier: Modifier) {
-    logoSignUp()
+fun HeaderSignUp(modifier: Modifier,navController: NavController) {
+    logoSignUp(navController)
 }
 
 @Composable
-fun logoSignUp() {
+fun logoSignUp(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -99,7 +101,15 @@ fun logoSignUp() {
                 .fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(20.dp))
-        correoContraseña()
+        Button(
+            onClick = {
+                // Ir a la página de iniciar sesion
+                navController.popBackStack()
+            }
+        ) {
+            Text(text = "Volver para Iniciar Sesion", color = azul4, fontSize = 25.sp)
+        }
+
     }
 }
 //

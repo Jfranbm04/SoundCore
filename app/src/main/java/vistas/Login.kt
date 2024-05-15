@@ -42,6 +42,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.util.PatternsCompat
+import androidx.navigation.NavController
 import com.example.soundcore.R
 import com.example.soundcore.ui.theme.azul1
 import com.example.soundcore.ui.theme.azul2
@@ -49,29 +50,30 @@ import com.example.soundcore.ui.theme.azul3
 import com.example.soundcore.ui.theme.azul4
 
 import com.google.firebase.auth.FirebaseAuth
+import modelos.Paths
 
 private lateinit var auth: FirebaseAuth
 
 @Composable
-fun LoginScreen() {
+fun LoginScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(8.dp)
     ) {
-        Header(Modifier.align(Alignment.TopCenter))
+        Header(Modifier.align(Alignment.TopCenter), navController)
         Spacer(modifier = Modifier.height(50.dp))
         //Body(Modifier.align(Alignment.Center))
     }
 }
 
 @Composable
-fun Header(modifier: Modifier) {
-    logo()
+fun Header(modifier: Modifier, navController: NavController) {
+    logo(navController)
 }
 
 @Composable
-fun logo() {
+fun logo(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -99,12 +101,12 @@ fun logo() {
                 .fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(20.dp))
-        correoContraseña()
+        correoContraseña(navController)
     }
 }
 
 @Composable
-fun correoContraseña() {
+fun correoContraseña(navController: NavController) {
     var email by rememberSaveable { mutableStateOf("b@b.com") }
     var password by rememberSaveable { mutableStateOf("123456") }
     var isLoginEnable by rememberSaveable { mutableStateOf(false) }
@@ -129,21 +131,20 @@ fun correoContraseña() {
         LoginButton(email, password)
 
         Spacer(modifier = Modifier.size(32.dp))
-        SignUpButton(email, password)
+        SignUpButton(navController)
 
     }
 }
 // Funcion para registro
 @Composable
-fun SignUpButton() {
+fun SignUpButton(navController: NavController) {
     val contexto = LocalContext.current
 
 
     Button(
         onClick = {
             // Ir a la página de registro
-            val intent = Intent(contexto, SignUpScreen()::class.java)
-            contexto.startActivity(intent)
+            navController.navigate(route = Paths.signUp.path )
         }
     ) {
         Text(text = "Registrarse", color = azul4, fontSize = 25.sp)

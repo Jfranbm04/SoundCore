@@ -16,6 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.soundcore.ui.theme.SoundCoreTheme
 import com.example.soundcore.ui.theme.azul3
 import com.example.soundcore.ui.theme.backgroundOscuro
+import modelos.AppNavigation
 import vistas.LoginScreen
 
 class MainActivity : ComponentActivity() {
@@ -30,29 +31,24 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Background()
+                    Box(modifier = Modifier
+                        .fillMaxSize()
+                        .background(backgroundOscuro)){
+                        AppNavigation()
+
+                    }
                 }
             }
         }
     }
 }
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-
 @Preview(showBackground = true)
 @Composable
 fun Background() {
     Box(modifier = Modifier
         .fillMaxSize()
         .background(backgroundOscuro)){
-        LoginScreen()
+        AppNavigation()
 
     }
 }
