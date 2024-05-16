@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -34,11 +35,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.util.PatternsCompat
@@ -88,9 +92,9 @@ fun logoSignUp(navController: NavController) {
         )
 
         Spacer(modifier = Modifier.height(30.dp))
-        iniciaSesion()
+        headerRegistro()
         Spacer(modifier = Modifier.height(20.dp))
-        Body()
+        BodySignUp()
         Spacer(modifier = Modifier.height(20.dp))
         // Divider con padding
         Divider(
@@ -101,17 +105,66 @@ fun logoSignUp(navController: NavController) {
                 .fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(20.dp))
-        Button(
-            onClick = {
-                // Ir a la página de iniciar sesion
-                navController.popBackStack()
-            }
-        ) {
-            Text(text = "Volver para Iniciar Sesion", color = azul4, fontSize = 25.sp)
-        }
+
+        VolverParaIniciarSesion(navController)
 
     }
 }
+
+// Header registro
+@Composable
+fun headerRegistro() {
+    Text(
+        text = "REGÍSTRATE \n EN SOUNDCORE",
+
+        modifier = Modifier
+            .background(color = azul1)
+            .border(1.dp, color = azul1)
+
+            .fillMaxWidth(),
+        fontSize = 30.sp,
+        textAlign = TextAlign.Center,
+        fontWeight = FontWeight.ExtraBold,
+        color = azul4
+    )
+}
+
+@Composable
+fun BodySignUp(){
+    Row(Modifier.fillMaxWidth()) {
+        continuaCon("Google")
+    }
+    Row(Modifier.fillMaxWidth()) {
+        continuaCon("Facebook")
+    }
+}
+
+// Función para hacer el texto clickable
+@Composable
+fun VolverParaIniciarSesion(navController: NavController) {
+    val annotatedString = buildAnnotatedString {
+        append("¿Tienes una cuenta? ")
+        pushStringAnnotation(tag = "login", annotation = "login")
+        withStyle(style = SpanStyle(color = azul4, fontWeight = FontWeight.Bold)) {
+            append("Inicia sesión.")
+        }
+        pop()
+    }
+
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        ClickableText(
+            text = annotatedString,
+            onClick = { offset ->
+                annotatedString.getStringAnnotations( start = offset, end = offset)
+                    .firstOrNull()?.let {
+                        navController.popBackStack()
+                    }
+            }
+        )
+    }
+}
+
+
 //
 //@Composable
 //fun correoContraseña() {

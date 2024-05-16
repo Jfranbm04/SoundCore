@@ -1,6 +1,7 @@
 package vistas
 
 import android.content.Intent
+import android.graphics.drawable.Icon
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -10,17 +11,21 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -32,13 +37,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.util.PatternsCompat
@@ -88,9 +97,9 @@ fun logo(navController: NavController) {
         )
 
         Spacer(modifier = Modifier.height(30.dp))
-        iniciaSesion()
+        headerLogin()
         Spacer(modifier = Modifier.height(20.dp))
-        Body()
+        BodyLogin()
         Spacer(modifier = Modifier.height(20.dp))
         // Divider con padding
         Divider(
@@ -114,7 +123,7 @@ fun correoContraseña(navController: NavController) {
     Column {
         Email(email) {
             email = it
-            if (password.length > 0 && email.length > 0 && isValidEmail(email))
+            if (password.isNotEmpty() && email.isNotEmpty() && isValidEmail(email))
                 isLoginEnable = true
             else
                 isLoginEnable = false
@@ -122,7 +131,7 @@ fun correoContraseña(navController: NavController) {
         Spacer(modifier = Modifier.size(4.dp))
         Password(password) {
             password = it
-            if (password.length > 0 && email.length > 0 && isValidEmail(email))
+            if (password.isNotEmpty() && email.isNotEmpty() && isValidEmail(email))
                 isLoginEnable = true
             else
                 isLoginEnable = false
@@ -131,23 +140,31 @@ fun correoContraseña(navController: NavController) {
         LoginButton(email, password)
 
         Spacer(modifier = Modifier.size(32.dp))
-        SignUpButton(navController)
-
+        SignUpText(navController)
     }
 }
-// Funcion para registro
+// Funcion para registro (texto clickable)
 @Composable
-fun SignUpButton(navController: NavController) {
-    val contexto = LocalContext.current
-
-
-    Button(
-        onClick = {
-            // Ir a la página de registro
-            navController.navigate(route = Paths.signUp.path )
+fun SignUpText(navController: NavController) {
+    val annotatedString = buildAnnotatedString {
+        append("¿No tienes cuenta? ")
+        pushStringAnnotation(tag = "signup", annotation = "signup")
+        withStyle(style = SpanStyle(color = azul4, fontWeight = FontWeight.Bold)) {
+            append("Crea una.")
         }
-    ) {
-        Text(text = "Registrarse", color = azul4, fontSize = 25.sp)
+        pop()
+    }
+
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        ClickableText(
+            text = annotatedString,
+            onClick = { offset ->
+                annotatedString.getStringAnnotations(tag = "signup", start = offset, end = offset)
+                    .firstOrNull()?.let {
+                        navController.navigate(route = Paths.signUp.path)
+                    }
+            }
+        )
     }
 }
 
@@ -214,30 +231,50 @@ fun createUser(email: String, password: String) {
 fun Password(password: String, onTextChanged: (String) -> Unit) {
     var showPassword by rememberSaveable { mutableStateOf(false) }
 
-    TextField(
-        value = password,
-        onValueChange = { onTextChanged(it) },
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.Black),
-        placeholder = { Text(text = "Contraseña") },
-        maxLines = 1,
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        colors = TextFieldDefaults.textFieldColors(
-            // textColor = Color(0xFF000000),
-            containerColor = azul2,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent
-        ),
-        visualTransformation = if (showPassword) {
-            VisualTransformation.None
-        } else {
-            PasswordVisualTransformation()
-        }
-    )
-}
+            .background(azul4)
+    ) {
+        TextField(
+            value = password,
+            onValueChange = { onTextChanged(it) },
+            modifier = Modifier
+                .weight(1f)
+                .background(azul4),
+            placeholder = { Text(text = "Contraseña") },
+            maxLines = 1,
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            colors = TextFieldDefaults.textFieldColors(
+                containerColor = azul4,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
+            ),
+            visualTransformation = if (showPassword) {
+                VisualTransformation.None
+            } else {
+                PasswordVisualTransformation()
+            }
+        )
+        IconButton(
+            onClick = { showPassword = !showPassword },
+            modifier = Modifier.background(azul4)
 
+        ) {
+            val icon: Painter = if (showPassword) {
+                painterResource(id = R.drawable.visibility) // ojo abierto
+            } else {
+                painterResource(id = R.drawable.visibility_off) // ojo cerrado
+            }
+            Icon(
+                painter = icon,
+                contentDescription = if (showPassword) "Ocultar contraseña" else "Mostrar contraseña",
+                modifier = Modifier.fillMaxHeight()
+            )
+        }
+    }
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Email(email: String, onTextChanged: (String) -> Unit) {
@@ -251,13 +288,13 @@ fun Email(email: String, onTextChanged: (String) -> Unit) {
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
         colors = TextFieldDefaults.textFieldColors(
             // textColor = Color(0xFF000000),
-            containerColor = azul2
+            containerColor = azul4
         )
     )
 }
 
 @Composable
-fun iniciaSesion() {
+fun headerLogin() {
     Text(
         text = "INICIAR SESIÓN \n EN SOUNDCORE",
 
@@ -278,15 +315,12 @@ fun isValidEmail(email: String): Boolean {
 }
 
 @Composable
-fun Body() {
+fun BodyLogin() {
     Row(Modifier.fillMaxWidth()) {
         continuaCon("Google")
     }
     Row(Modifier.fillMaxWidth()) {
         continuaCon("Facebook")
-    }
-    Row(Modifier.fillMaxWidth()) {
-        continuaCon("Apple")
     }
 }
 
