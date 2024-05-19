@@ -26,43 +26,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.soundcore.R
 import com.example.soundcore.ui.theme.SoundCoreTheme
 import com.example.soundcore.ui.theme.backgroundOscuro
 
-class PantallaPrincipal : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            SoundCoreTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Cyan),
-
-                    color = MaterialTheme.colorScheme.background,
-
-                    ) {
-                    BackgroundP1()
-
-                }
-            }
-        }
-    }
-}
-// Método para añadir toast
-fun showToast(context: Context, mensaje: String, duracion: Int = Toast.LENGTH_SHORT) {
-    Toast.makeText(context, mensaje, duracion).show()
-}
 
 
-@Preview(showBackground = true)
 @Composable
-fun BackgroundP1() {
-
-    var isRecording by remember { mutableStateOf(false) }
-    var username by remember { mutableStateOf("Desconocido") }
+fun MainScreen(navController: NavController) {
 
     Box(
         modifier = Modifier
@@ -85,3 +57,9 @@ fun BackgroundP1() {
         }
     }
 }
+
+// Método para añadir toast
+fun showToast(context: Context, mensaje: String, duracion: Int = Toast.LENGTH_SHORT) {
+    Toast.makeText(context, mensaje, duracion).show()
+}
+

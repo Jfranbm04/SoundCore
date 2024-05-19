@@ -16,13 +16,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.soundcore.ui.theme.SoundCoreTheme
 import com.example.soundcore.ui.theme.azul3
 import com.example.soundcore.ui.theme.backgroundOscuro
+import com.google.firebase.auth.FirebaseAuth
 import modelos.AppNavigation
 import vistas.LoginScreen
 
 class MainActivity : ComponentActivity() {
+
+    private lateinit var auth: FirebaseAuth
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        auth = FirebaseAuth.getInstance() // Inicializa FirebaseAuth
 
         setContent {
             SoundCoreTheme {

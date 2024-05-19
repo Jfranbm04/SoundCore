@@ -59,6 +59,8 @@ import com.example.soundcore.ui.theme.azul3
 import com.example.soundcore.ui.theme.azul4
 
 import com.google.firebase.auth.FirebaseAuth
+import controladores.comprobarLogin
+import controladores.comprobarRegistro
 import modelos.Paths
 
 private lateinit var auth: FirebaseAuth
@@ -69,6 +71,7 @@ fun LoginScreen(navController: NavController) {
         modifier = Modifier
             .fillMaxSize()
             .padding(8.dp)
+            .background(Color.Transparent)
     ) {
         Header(Modifier.align(Alignment.TopCenter), navController)
         Spacer(modifier = Modifier.height(50.dp))
@@ -141,8 +144,20 @@ fun correoContraseña(navController: NavController) {
 
         Spacer(modifier = Modifier.size(32.dp))
         SignUpText(navController)
+
+        Spacer(modifier = Modifier.size(32.dp))
+        ScreenMain(navController)
+
     }
 }
+
+@Composable
+fun ScreenMain(navController: NavController) {
+    Button(onClick = { navController.navigate(Paths.pantallaPrincipal.path) }) {
+        Text(text = "Go to Screen 2")
+    }
+}
+
 // Funcion para registro (texto clickable)
 @Composable
 fun SignUpText(navController: NavController) {
@@ -168,63 +183,28 @@ fun SignUpText(navController: NavController) {
     }
 }
 
-// Función para login
+// Función para mostrar el botón de login y darle funcionalidad
 @Composable
 fun LoginButton(email: String, password: String) {
     val contexto = LocalContext.current
 
     Button(
         onClick = {
-            val auth = FirebaseAuth.getInstance()
-
-            // Iniciar sesión con Firebase
-            auth.signInWithEmailAndPassword(email, password)
-                .addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        // Inicio de sesión exitoso
-                        val intent = Intent(contexto, PantallaPrincipal::class.java)
-                        Toast.makeText(contexto, "Sesión iniciada.", Toast.LENGTH_SHORT).show()
-                        contexto.startActivity(intent)
-                    } else {
-                        // Error en el inicio de sesión
-                        Log.i("Jorge guapo", "Log in with $email failed with reason ${task.exception}")
-                        Toast.makeText(contexto, "${task.exception}", Toast.LENGTH_SHORT).show()
-                    }
-                }
+            comprobarLogin(contexto, email, password)
+//            comprobarRegistro(contexto, email, password)
         },
-
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 18.dp),
         colors = ButtonDefaults.buttonColors(
             disabledContentColor = Color.White,
-            contentColor = Color.Magenta,
             containerColor = azul1,
-            disabledContainerColor = Color.Magenta
         )
     ) {
         Text(text = "Iniciar Sesión", color = azul4, fontSize = 25.sp)
     }
 }
 
-
-@Composable
-fun createUser(email: String, password: String) {
-    val auth = FirebaseAuth.getInstance()
-    val context = LocalContext.current
-
-    auth.createUserWithEmailAndPassword(email, password)
-        .addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                // Usuario creado exitosamente
-                val intent = Intent(context, PantallaPrincipal::class.java)
-                context.startActivity(intent)
-            } else {
-                // Error en la creación del usuario
-                Toast.makeText(context, "Error al crear el usuario", Toast.LENGTH_SHORT).show()
-            }
-        }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -299,8 +279,7 @@ fun headerLogin() {
         text = "INICIAR SESIÓN \n EN SOUNDCORE",
 
         modifier = Modifier
-            .background(color = azul1)
-            .border(1.dp, color = azul1)
+            .background(color = Color.Transparent)
 
             .fillMaxWidth(),
         fontSize = 30.sp,
@@ -332,16 +311,15 @@ fun continuaCon(app: String) {
         },
         modifier = Modifier
             .padding(4.dp)
-            .border(1.dp, color = Color(0xFF878787), shape = CircleShape)
+//            .border(1.dp, color = Color(0xFF878787), shape = CircleShape)
             .fillMaxWidth(),
         colors = ButtonDefaults.buttonColors(
-            contentColor = Color.White,
-            containerColor = Color.Black
+            containerColor = azul1
         )
     ) {
         Text(
             text = "Continuar con $app",
-            color = Color.White,
+            color = azul4,
             fontSize = 16.sp,
 
             fontWeight = FontWeight.Bold,

@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import vistas.LoginScreen
+import vistas.MainScreen
 import vistas.SignUpScreen
 
 @Composable
@@ -18,6 +19,9 @@ fun AppNavigation(){
         }
         composable(route = Paths.signUp.path) {
             SignUpScreen(navController)  // Método que pinta la pantalla de registrarse
+        }
+        composable(route = Paths.pantallaPrincipal.path) {
+            MainScreen(navController)  // Método que pinta la pantalla principal
         }
     }
 }
