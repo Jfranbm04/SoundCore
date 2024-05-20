@@ -140,29 +140,20 @@ fun correoContraseña(navController: NavController) {
                 isLoginEnable = false
         }
         Spacer(modifier = Modifier.size(32.dp))
-        LoginButton(email, password)
+        LoginButton(navController, email, password)
 
         Spacer(modifier = Modifier.size(32.dp))
         SignUpText(navController)
-
-        Spacer(modifier = Modifier.size(32.dp))
-        ScreenMain(navController)
-
     }
 }
 
-@Composable
-fun ScreenMain(navController: NavController) {
-    Button(onClick = { navController.navigate(Paths.pantallaPrincipal.path) }) {
-        Text(text = "Go to Screen 2")
-    }
-}
+
 
 // Funcion para registro (texto clickable)
 @Composable
 fun SignUpText(navController: NavController) {
     val annotatedString = buildAnnotatedString {
-        append("¿No tienes cuenta? ")
+        append("¿No tienes cuenta?")
         pushStringAnnotation(tag = "signup", annotation = "signup")
         withStyle(style = SpanStyle(color = azul4, fontWeight = FontWeight.Bold)) {
             append("Crea una.")
@@ -185,13 +176,12 @@ fun SignUpText(navController: NavController) {
 
 // Función para mostrar el botón de login y darle funcionalidad
 @Composable
-fun LoginButton(email: String, password: String) {
+fun LoginButton(navController: NavController, email: String, password: String) {
     val contexto = LocalContext.current
 
     Button(
         onClick = {
-            comprobarLogin(contexto, email, password)
-//            comprobarRegistro(contexto, email, password)
+            comprobarLogin(navController, contexto, email, password)
         },
         modifier = Modifier
             .fillMaxWidth()

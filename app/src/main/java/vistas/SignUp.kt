@@ -6,33 +6,42 @@ import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -54,6 +63,10 @@ import com.example.soundcore.ui.theme.azul3
 import com.example.soundcore.ui.theme.azul4
 
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.auth.User
+import controladores.comprobarRegistro
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import modelos.Paths
 
 private lateinit var auth: FirebaseAuth
@@ -81,14 +94,14 @@ fun logoSignUp(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            // .padding(16.dp)
     ) {
         Image(
             painter = painterResource(id = R.drawable.soundcore_logo),
             contentDescription = null,
             modifier = Modifier
-                .size(150.dp) // Tamaño de la imagen
-                .align(alignment = Alignment.CenterHorizontally)
+                .size(50.dp) // Tamaño de la imagen
+                .align(alignment = Alignment.Start)
         )
 
         Spacer(modifier = Modifier.height(30.dp))
@@ -102,12 +115,152 @@ fun logoSignUp(navController: NavController) {
                 .height(0.5.dp)
                 .fillMaxWidth()
         )
-        Spacer(modifier = Modifier.height(20.dp))
 
+        Spacer(modifier = Modifier.height(20.dp))
+        camposRegistro(navController)
+
+        Spacer(modifier = Modifier.height(20.dp))
         VolverParaIniciarSesion(navController)
+
 
     }
 }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun camposRegistro(navController: NavController) {
+    val contexto = LocalContext.current
+    var nombre by remember { mutableStateOf("") }
+    var correo by remember { mutableStateOf("") }
+    var contraseña by remember { mutableStateOf("") }
+    var aceptarProteccionDatos by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showPassword by rememberSaveable { mutableStateOf(false) }
+
+    fun mostrarToast(mensaje: String) {
+        Toast.makeText(contexto, mensaje, Toast.LENGTH_SHORT).show()
+    }
+
+    fun comprobarRegistro() {
+        when {
+            !aceptarProteccionDatos -> mostrarToast("Debes aceptar la protección de datos.")
+            correo.isEmpty() -> mostrarToast("No has proporcionado un correo.")
+            contraseña.isEmpty() -> mostrarToast("No has escrito una contraseña.")
+            else -> comprobarRegistro(navController, contexto, correo, contraseña)
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center
+    ) {
+        TextField(
+            value = nombre,
+            onValueChange = { nombre = it },
+            label = { Text("Nombre de usuario") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Text),
+            colors = TextFieldDefaults.textFieldColors(
+                containerColor = azul4,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
+            ),
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        TextField(
+            value = correo,
+            onValueChange = { correo = it },
+            label = { Text("Correo Electrónico") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email),
+            colors = TextFieldDefaults.textFieldColors(
+                containerColor = azul4,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
+            ),
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(azul4)
+        ) {
+            TextField(
+                value = contraseña,
+                onValueChange = { contraseña = it },
+                modifier = Modifier
+                    .weight(1f)
+                    .background(azul4),
+                label = { Text("Contraseña") },
+                maxLines = 1,
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                colors = TextFieldDefaults.textFieldColors(
+                    containerColor = azul4,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent
+                ),
+                visualTransformation = if (showPassword) {
+                    VisualTransformation.None
+                } else {
+                    PasswordVisualTransformation()
+                }
+            )
+            IconButton(
+                onClick = { showPassword = !showPassword },
+                modifier = Modifier.background(azul4)
+
+            ) {
+                val icon: Painter = if (showPassword) {
+                    painterResource(id = R.drawable.visibility) // ojo abierto
+                } else {
+                    painterResource(id = R.drawable.visibility_off) // ojo cerrado
+                }
+                Icon(
+                    painter = icon,
+                    contentDescription = if (showPassword) "Ocultar contraseña" else "Mostrar contraseña",
+                    modifier = Modifier.fillMaxHeight()
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(
+                checked = aceptarProteccionDatos,
+                onCheckedChange = { aceptarProteccionDatos = it }
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text="Acepto la protección de datos", color = azul4)
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(
+            onClick = { comprobarRegistro() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 18.dp),
+            colors = ButtonDefaults.buttonColors(
+                disabledContentColor = Color.White,
+                containerColor = azul1
+            )
+        ) {
+            Text(text= "Registrarme", color = azul4, fontSize = 25.sp)
+        }
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage ?: "",
+                color = azul4,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
+    }
+}
+
+
 
 // Header registro
 @Composable
@@ -116,9 +269,6 @@ fun headerRegistro() {
         text = "REGÍSTRATE \n EN SOUNDCORE",
 
         modifier = Modifier
-            .background(color = azul1)
-            .border(1.dp, color = azul1)
-
             .fillMaxWidth(),
         fontSize = 30.sp,
         textAlign = TextAlign.Center,
@@ -139,11 +289,16 @@ fun VolverParaIniciarSesion(navController: NavController) {
         pop()
     }
 
-    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp),
+        contentAlignment = Alignment.Center
+    ) {
         ClickableText(
             text = annotatedString,
             onClick = { offset ->
-                annotatedString.getStringAnnotations( start = offset, end = offset)
+                annotatedString.getStringAnnotations(start = offset, end = offset)
                     .firstOrNull()?.let {
                         navController.popBackStack()
                     }
@@ -151,4 +306,5 @@ fun VolverParaIniciarSesion(navController: NavController) {
         )
     }
 }
+
 
