@@ -12,7 +12,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.BottomNavigation
+import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,35 +34,81 @@ import com.example.soundcore.R
 import com.example.soundcore.ui.theme.SoundCoreTheme
 import com.example.soundcore.ui.theme.backgroundOscuro
 
-
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.example.soundcore.ui.theme.azul1
+import com.example.soundcore.ui.theme.azul2
+import com.example.soundcore.ui.theme.azul3
+import com.example.soundcore.ui.theme.azul4
+import com.example.soundcore.ui.theme.backgroundClaro
+import modelos.BottomNavItem
 
 @Composable
 fun MainScreen(navController: NavController) {
+    val mainNavController = rememberNavController()
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(backgroundOscuro)
-    ) {
-        Column(
+    Scaffold(
+        bottomBar = {
+            BottomNavigationBar(mainNavController)
+        }
+    ) { innerPadding ->
+        NavHost(
+            navController = mainNavController,
+            startDestination = BottomNavItem.Home.route,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
+                .padding(innerPadding).background(backgroundOscuro)
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.soundcore_logo),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(100.dp)
-                    .align(alignment = Alignment.CenterHorizontally)
-                    .clip(shape = MaterialTheme.shapes.medium)
+            composable(route = BottomNavItem.Home.route) { HomeScreen(navController) }
+            composable(route = BottomNavItem.Buscar.route) { BuscarScreen(navController) }
+            composable(route = BottomNavItem.Perfil.route) { PerfilScreen(navController) }
+        }
+    }
+}
+
+// Define BottomNavigationBar
+@Composable
+fun BottomNavigationBar(navController: NavController) {
+    val items = listOf(
+        BottomNavItem.Home,
+        BottomNavItem.Buscar,
+        BottomNavItem.Perfil
+    )
+    BottomNavigation(
+        backgroundColor = backgroundOscuro,
+        contentColor = Color.Black
+    ) {
+        items.forEach { item ->
+            val selected = navController.currentBackStackEntry?.destination?.route == item.route
+            BottomNavigationItem(
+                icon = { Icon(imageVector = item.icon, contentDescription = item.label, tint = Color.White, modifier = Modifier.size(30.dp)) },
+                selected = selected,
+                onClick = {
+                    navController.navigate(item.route) {
+                        // Evita la duplicación de la misma ruta en el back stack
+                        navController.graph.startDestinationRoute?.let { route ->
+                            popUpTo(route) {
+                                saveState = true
+                            }
+                        }
+                        // Evita la recreación del mismo destino si ya está seleccionado
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
             )
         }
     }
 }
 
-// Método para añadir toast
-fun showToast(context: Context, mensaje: String, duracion: Int = Toast.LENGTH_SHORT) {
-    Toast.makeText(context, mensaje, duracion).show()
-}
+
+
 

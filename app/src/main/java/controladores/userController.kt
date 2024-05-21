@@ -7,7 +7,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import com.google.firebase.auth.FirebaseAuth
 import android.content.Context
+import android.provider.Settings.Global.getString
 import androidx.navigation.NavController
+import com.example.soundcore.R
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import modelos.Paths
 
 private lateinit var auth: FirebaseAuth
@@ -26,7 +29,7 @@ fun comprobarLogin(navController: NavController, contexto: Context, email: Strin
                 navController.navigate(Paths.pantallaPrincipal.path) // Pasa a la pantalla principal
             } else {
                 // Error en el inicio de sesión
-                Toast.makeText(contexto, "Hubo un error al iniciar sesión", Toast.LENGTH_SHORT).show()
+                Toast.makeText(contexto, "Hubo un error al iniciar sesión. Inténtelo de nuevo.", Toast.LENGTH_SHORT).show()
             }
         }
 }

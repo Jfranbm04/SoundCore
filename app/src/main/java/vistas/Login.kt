@@ -102,8 +102,6 @@ fun logo(navController: NavController) {
         Spacer(modifier = Modifier.height(30.dp))
         headerLogin()
         Spacer(modifier = Modifier.height(20.dp))
-        BodyLogin()
-        Spacer(modifier = Modifier.height(20.dp))
         // Divider con padding
         Divider(
             color = Color.Gray,
@@ -283,38 +281,4 @@ fun isValidEmail(email: String): Boolean {
     return PatternsCompat.EMAIL_ADDRESS.matcher(email).matches()
 }
 
-@Composable
-fun BodyLogin() {
-    Row(Modifier.fillMaxWidth()) {
-        continuaCon("Google")
-    }
-    Row(Modifier.fillMaxWidth()) {
-        continuaCon("Facebook")
-    }
-}
 
-@Composable
-fun continuaCon(app: String) {
-    Button(
-        onClick = {
-            val text = "No implementado."
-        },
-        modifier = Modifier
-            .padding(4.dp)
-//            .border(1.dp, color = Color(0xFF878787), shape = CircleShape)
-            .fillMaxWidth(),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = azul1
-        )
-    ) {
-        Text(
-            text = "Continuar con $app",
-            color = azul4,
-            fontSize = 16.sp,
-
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-        )
-    }
-}

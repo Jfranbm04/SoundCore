@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,14 +22,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -102,6 +106,9 @@ fun logoSignUp(navController: NavController) {
             modifier = Modifier
                 .size(50.dp) // Tamaño de la imagen
                 .align(alignment = Alignment.Start)
+                .clickable {
+                    navController.popBackStack()
+                }
         )
 
         Spacer(modifier = Modifier.height(30.dp))
@@ -133,8 +140,40 @@ fun camposRegistro(navController: NavController) {
     var correo by remember { mutableStateOf("") }
     var contraseña by remember { mutableStateOf("") }
     var aceptarProteccionDatos by remember { mutableStateOf(false) }
+    var dialogRGPD by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var showPassword by rememberSaveable { mutableStateOf(false) }
+
+
+    // AlertDialog para la protección de datos
+    if (dialogRGPD) {
+        AlertDialog(
+            onDismissRequest = { dialogRGPD = false },
+            title = { Text(text = "Política de Protección de Datos") },
+            text = { Text(text = "Política de Protección de Datos\n" +
+                    "\n" +
+                    "Nos comprometemos a proteger y respetar su privacidad. Esta política explica cuándo y por qué recopilamos información personal sobre las personas que visitan nuestra app, cómo la utilizamos, las condiciones bajo las cuales podemos divulgarla a otros y cómo la mantenemos segura.\n" +
+                    "\n" +
+                    "¿Qué información recopilamos?\n" +
+                    "\n" +
+                    "Recopilamos información sobre usted cuando se registra en nuestra app, añade datos personales o hace alguna operación dentro de ésta. La información recopilada puede incluir su nombre y dirección de correo electrónico.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    aceptarProteccionDatos = true
+                    dialogRGPD = false
+                }) {
+                    Text("Aceptar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    dialogRGPD = false
+                }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
 
     fun mostrarToast(mensaje: String) {
         Toast.makeText(contexto, mensaje, Toast.LENGTH_SHORT).show()
@@ -232,10 +271,20 @@ fun camposRegistro(navController: NavController) {
         ) {
             Checkbox(
                 checked = aceptarProteccionDatos,
-                onCheckedChange = { aceptarProteccionDatos = it }
+                onCheckedChange = { aceptarProteccionDatos = it },
+                colors = CheckboxDefaults.colors(
+                    checkedColor = azul1,
+                    uncheckedColor = azul4
+                )
+
             )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text="Acepto la protección de datos", color = azul4)
+            Text(text = "Acepto la ", color = Color.Black)
+            Text(
+                text = "protección de datos",
+                color = azul4,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier.clickable { dialogRGPD = true }
+            )
         }
         Spacer(modifier = Modifier.height(16.dp))
         Button(

@@ -5,15 +5,27 @@ import androidx.navigation.NavHost
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.firebase.auth.FirebaseAuth
+import vistas.AjustesScreen
+import vistas.BuscarScreen
+import vistas.HomeScreen
 import vistas.LoginScreen
 import vistas.MainScreen
+import vistas.PerfilScreen
 import vistas.SignUpScreen
 
 @Composable
 fun AppNavigation(){
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = Paths.login.path) {
+    // Verificar si ya se ha iniciado sesión
+    val pantallaInicial = if (FirebaseAuth.getInstance().currentUser != null) {
+        Paths.pantallaPrincipal.path
+    } else {
+        Paths.login.path
+    }
+
+    NavHost(navController = navController, startDestination = pantallaInicial) {
         composable(route = Paths.login.path) {
             LoginScreen(navController)   // Método que pinta la pantalla del login
         }
@@ -23,6 +35,10 @@ fun AppNavigation(){
         composable(route = Paths.pantallaPrincipal.path) {
             MainScreen(navController)  // Método que pinta la pantalla principal
         }
+        composable(route = BottomNavItem.Home.route) { HomeScreen(navController) }
+        composable(route = BottomNavItem.Buscar.route) { BuscarScreen(navController) }
+        composable(route = BottomNavItem.Perfil.route) { PerfilScreen(navController) }
+        composable(route = Paths.Ajustes.path) { AjustesScreen(navController) }
     }
 }
 
