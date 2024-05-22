@@ -11,6 +11,8 @@ import android.provider.Settings.Global.getString
 import androidx.navigation.NavController
 import com.example.soundcore.R
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 import modelos.Paths
 
 private lateinit var auth: FirebaseAuth
@@ -35,21 +37,60 @@ fun comprobarLogin(navController: NavController, contexto: Context, email: Strin
 }
 
 // Función para comprobar registro
-fun comprobarRegistro(navController: NavController, contexto: Context, email: String, password: String){
-    auth = FirebaseAuth.getInstance()
+fun comprobarRegistro(navController: NavController, contexto: Context, nombreUsuario : String, email: String, contraseña: String){
+    val auth = FirebaseAuth.getInstance()
 
-    auth.createUserWithEmailAndPassword(email, password)
+    auth.createUserWithEmailAndPassword(email, contraseña)
         .addOnCompleteListener { task ->
             if (task.isSuccessful) {
-                Toast.makeText(contexto,"Te has registrado correctamente.",Toast.LENGTH_SHORT).show()
-                navController.navigate(Paths.pantallaPrincipal.path) // Pasa a la pantalla principal
-
-                Log.d(TAG, "createUserWithEmail:success")
                 val user = auth.currentUser
+                Toast.makeText(contexto, "Te has registrado correctamente.", Toast.LENGTH_SHORT).show()
+                navController.navigate(Paths.pantallaPrincipal.path) // Navigate to main screen
+
+                // Añadir usuario a firestore
+                crearUsuarioFirestore(user!!.uid, nombreUsuario, email)
             } else {
-                Log.w(TAG, "createUserWithEmail:failure", task.exception)
-                Toast.makeText(contexto,"No se ha podido registrar correctamente.",Toast.LENGTH_SHORT).show()
+                Log.w(TAG, "createUserWithEmailAndPassword:failure", task.exception)
+                val errorMessage = task.exception!!.message.toString()
+                Toast.makeText(contexto, "Error al registrarse: $errorMessage", Toast.LENGTH_SHORT).show()
             }
         }
 }
 
+// Añadir usuario a firestore
+private fun crearUsuarioFirestore(uid: String, nombreUsuario: String, email: String) {
+    val firestore = FirebaseFirestore.getInstance()
+    val docRef = firestore.collection("usuarios").document(uid)
+
+    val userData = hashMapOf(
+        "nombreUsuario" to nombreUsuario,
+        "email" to email,
+        "contraseña" to ""
+    )
+
+    docRef.set(userData)
+        .addOnSuccessListener {
+            Log.d(TAG, "Usuario creado en Firestore")
+        }
+        .addOnFailureListener { e ->
+            Log.w(TAG, "Error al crear usuario en Firestore", e)
+        }
+}
+
+
+// Sacar datos usuario firestore
+suspend fun obtenerDatosUsuario(uid: String): Map<String, Any>? {
+    val firestore = FirebaseFirestore.getInstance()
+    return try {
+        val document = firestore.collection("usuarios").document(uid).get().await()
+        if (document.exists()) {
+            document.data
+        } else {
+            Log.d("Firestore", "No hay un usuario con el uid: $uid")
+            null
+        }
+    } catch (e: Exception) {
+        Log.e("Firestore", "Error sacando los datos del usuario", e)
+        null
+    }
+}

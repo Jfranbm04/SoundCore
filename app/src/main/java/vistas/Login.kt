@@ -151,7 +151,9 @@ fun correoContraseña(navController: NavController) {
 @Composable
 fun SignUpText(navController: NavController) {
     val annotatedString = buildAnnotatedString {
-        append("¿No tienes cuenta?")
+        withStyle(style = SpanStyle(color = Color.White)) {
+            append("¿No tienes cuenta? ")
+        }
         pushStringAnnotation(tag = "signup", annotation = "signup")
         withStyle(style = SpanStyle(color = azul4, fontWeight = FontWeight.Bold)) {
             append("Crea una.")
@@ -189,7 +191,7 @@ fun LoginButton(navController: NavController, email: String, password: String) {
             containerColor = azul1,
         )
     ) {
-        Text(text = "Iniciar Sesión", color = azul4, fontSize = 25.sp)
+        Text(text = "Iniciar Sesión", color = Color.White, fontSize = 25.sp)
     }
 }
 

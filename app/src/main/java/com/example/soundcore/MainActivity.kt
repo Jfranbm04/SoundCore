@@ -12,9 +12,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.content.ContextCompat
 import com.example.soundcore.ui.theme.SoundCoreTheme
 import com.example.soundcore.ui.theme.azul3
+import com.example.soundcore.ui.theme.backgroundClaro
 import com.example.soundcore.ui.theme.backgroundOscuro
 import com.google.firebase.auth.FirebaseAuth
 import modelos.AppNavigation

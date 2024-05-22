@@ -18,6 +18,6 @@ fun BuscarScreen(navController: NavController) {
         contentAlignment = Alignment.Center
 
     ) {
-        Text(text = "Search Screen")
+        Text(text = "Search Screen", color = Color.White)
     }
 }

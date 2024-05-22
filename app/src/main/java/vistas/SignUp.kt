@@ -136,7 +136,7 @@ fun logoSignUp(navController: NavController) {
 @Composable
 fun camposRegistro(navController: NavController) {
     val contexto = LocalContext.current
-    var nombre by remember { mutableStateOf("") }
+    var nombreUsuario by remember { mutableStateOf("") }
     var correo by remember { mutableStateOf("") }
     var contraseña by remember { mutableStateOf("") }
     var aceptarProteccionDatos by remember { mutableStateOf(false) }
@@ -184,7 +184,8 @@ fun camposRegistro(navController: NavController) {
             !aceptarProteccionDatos -> mostrarToast("Debes aceptar la protección de datos.")
             correo.isEmpty() -> mostrarToast("No has proporcionado un correo.")
             contraseña.isEmpty() -> mostrarToast("No has escrito una contraseña.")
-            else -> comprobarRegistro(navController, contexto, correo, contraseña)
+            nombreUsuario.isEmpty() -> mostrarToast("No has escrito un nombre de usuario.")
+            else -> comprobarRegistro(navController, contexto, nombreUsuario, correo, contraseña)
         }
     }
 
@@ -194,8 +195,8 @@ fun camposRegistro(navController: NavController) {
         verticalArrangement = Arrangement.Center
     ) {
         TextField(
-            value = nombre,
-            onValueChange = { nombre = it },
+            value = nombreUsuario,
+            onValueChange = { nombreUsuario = it },
             label = { Text("Nombre de usuario") },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Text),
@@ -278,7 +279,7 @@ fun camposRegistro(navController: NavController) {
                 )
 
             )
-            Text(text = "Acepto la ", color = Color.Black)
+            Text(text = "Acepto la ", color = Color.White)
             Text(
                 text = "protección de datos",
                 color = azul4,
@@ -297,7 +298,7 @@ fun camposRegistro(navController: NavController) {
                 containerColor = azul1
             )
         ) {
-            Text(text= "Registrarme", color = azul4, fontSize = 25.sp)
+            Text(text= "Registrarme", color = Color.White, fontSize = 25.sp)
         }
         if (errorMessage != null) {
             Text(
@@ -330,7 +331,9 @@ fun headerRegistro() {
 @Composable
 fun VolverParaIniciarSesion(navController: NavController) {
     val annotatedString = buildAnnotatedString {
-        append("¿Tienes una cuenta? ")
+        withStyle(style = SpanStyle(color = Color.White)) {
+            append("¿Tienes una cuenta? ")
+        }
         pushStringAnnotation(tag = "login", annotation = "login")
         withStyle(style = SpanStyle(color = azul4, fontWeight = FontWeight.Bold)) {
             append("Inicia sesión.")

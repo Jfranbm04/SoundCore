@@ -19,6 +19,6 @@ fun HomeScreen(navController: NavController) {
         contentAlignment = Alignment.Center
 
     ) {
-        Text(text = "Home Screen")
+        Text(text = "Home Screen", color = Color.White)
     }
 }
