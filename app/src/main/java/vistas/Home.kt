@@ -38,20 +38,16 @@ import kotlinx.coroutines.delay
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.media.MediaRecorder
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import controladores.playRecording
 import controladores.startRecording
 import controladores.stopRecording
-import java.io.IOException
-
+import controladores.evaluateRecording
 
 @Composable
 fun HomeScreen(navController: NavController) {
@@ -192,15 +188,28 @@ fun HomeScreen(navController: NavController) {
 
             AnimatedVisibility(visible = showPlayback) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Button(onClick = {
-                        isPlayingBack = true
-                        playRecording(context) {
-                            isPlayingBack = false
-                        }
-                    } , colors = ButtonDefaults.buttonColors(containerColor = azul1)
-                        ) {
-
+                    Button(
+                        onClick = {
+                            isPlayingBack = true
+                            playRecording(context) {
+                                isPlayingBack = false
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = azul1)
+                    ) {
                         Text(text = "Escucha tu palmada")
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(
+                        onClick = {
+                            val evaluation = evaluateRecording(context)
+                            Toast.makeText(context, "Evaluación: $evaluation", Toast.LENGTH_SHORT).show()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = azul1)
+                    ) {
+                        Text(text = "Evaluar palmada")
                     }
                 }
             }
@@ -224,4 +233,5 @@ fun HomeScreen(navController: NavController) {
         }
     }
 }
+
 

@@ -9,7 +9,10 @@ import java.io.IOException
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
+import android.os.CountDownTimer
 import android.provider.MediaStore
+import java.io.File
+import kotlin.math.log10
 
 
 //private val recorder = MediaRecorder()
@@ -119,5 +122,42 @@ fun stopPlaying() {
 }
 
 
+// Evaluar el audio
+fun evaluateRecording(context: Context): Int {
+    val audioFile = File(context.getExternalFilesDir(null), "audiorecordtest.3gp")
+    if (!audioFile.exists()) {
+        return 0 // No hay archivo para evaluar
+    }
 
+    var maxAmplitude = 0
+    val mediaPlayer = MediaPlayer()
+    try {
+        mediaPlayer.setDataSource(audioFile.absolutePath)
+        mediaPlayer.prepare()
+        mediaPlayer.start()
+
+        // Utiliza un temporizador para verificar la amplitud mientras se reproduce el audio
+        val timer = object : CountDownTimer(mediaPlayer.duration.toLong(), 100) {
+            override fun onTick(millisUntilFinished: Long) {
+                val amplitude = mediaPlayer.audioSessionId
+                if (amplitude > maxAmplitude) {
+                    maxAmplitude = amplitude
+                }
+            }
+
+            override fun onFinish() {
+                mediaPlayer.stop()
+                mediaPlayer.release()
+            }
+        }
+        timer.start()
+    } catch (e: Exception) {
+        e.printStackTrace()
+        mediaPlayer.release()
+    }
+
+    // Convierte la amplitud máxima en un valor de 1 a 100
+    val maxDb = 20 * log10(maxAmplitude.toDouble() / 32768.0)
+    return (maxDb / 120 * 100).toInt().coerceIn(1, 100)
+}
 
