@@ -80,7 +80,7 @@ fun PerfilScreen(navController: NavController) {
         topBar = {
             TopAppBar(
                 title = { Text("Perfil", fontSize = 20.sp, color = Color.White, fontWeight = FontWeight.Bold) },
-                backgroundColor = Color(0xFF1C1C1C),
+                backgroundColor = backgroundOscuro,
                 actions = {
                     IconButton(onClick = { navController.navigate("ajustes") }) {
                         Icon(Icons.Default.Settings, contentDescription = "Ajustes", tint = Color.White)
@@ -93,14 +93,14 @@ fun PerfilScreen(navController: NavController) {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .background(Color(0xFF1C1C1C)),
-                contentAlignment = Alignment.Center,
+                    .background(backgroundOscuro),
+                contentAlignment = Alignment.TopStart,
             ) {
                 if (isLoading) {
-                    CircularProgressIndicator(color = Color.White)
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.padding(8.dp))
                 } else {
                     userData?.let { data ->
-                        Column(horizontalAlignment = Alignment.Start) {
+                        Column(horizontalAlignment = Alignment.Start, modifier = Modifier.padding(8.dp)) {
                             // Fila para foto de perfil, nombre y correo electrónico
                             Row(verticalAlignment = Alignment.Top) {
                                 // Mostrar un círculo azul claro en lugar de la foto de perfil
@@ -114,9 +114,9 @@ fun PerfilScreen(navController: NavController) {
 
                                 // Muestra el nombre y el correo electrónico del usuario
                                 Column {
-                                    Text(text = "Nombre: ${data["nombreUsuario"] ?: "No disponible"}", color = Color.White, fontWeight = FontWeight.Bold)
+                                    Text(text = "${data["nombreUsuario"] ?: "Nombre no disponible"}", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
                                     Spacer(modifier = Modifier.height(4.dp))
-                                    Text(text = "Correo electrónico: ${data["email"] ?: "No disponible"}", color = Color.Gray)
+                                    Text(text = "${data["email"] ?: "Correo no disponible"}", color = Color.Gray)
                                 }
                             }
 
