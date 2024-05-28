@@ -49,6 +49,11 @@ import controladores.startRecording
 import controladores.stopRecording
 import controladores.evaluateRecording
 
+
+
+// Utilizo MediaCodec y TarsosDSP para el trato de audio
+
+
 @Composable
 fun HomeScreen(navController: NavController) {
     var isPlaying by remember { mutableStateOf(false) }

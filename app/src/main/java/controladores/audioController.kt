@@ -13,6 +13,7 @@ import android.os.CountDownTimer
 import android.provider.MediaStore
 import java.io.File
 import kotlin.math.log10
+import android.media.MediaMetadataRetriever
 
 
 private val recorder = MediaRecorder()
@@ -22,46 +23,24 @@ private var mediaPlayer: MediaPlayer? = null
 // Variables globales para almacenar el archivo de salida y el nombre del archivo.
 private lateinit var currentFileName: String
 
-// Agrega una variable global para almacenar la ruta del archivo de audio
-private lateinit var audioFilePath: String
-
 fun startRecording(context: Context) {
-    // Genera un nombre de archivo único con timestamp
     val timestamp = System.currentTimeMillis()
-    currentFileName = "audiorecord_$timestamp.3ga"
+    currentFileName = "audiorecord_$timestamp.3gp"
 
-    // Log del nombre del archivo
     Log.d("AudioRecorderController", "Nombre del archivo de audio: ${
         context.getExternalFilesDir(
             null
         )?.absolutePath
     }/$currentFileName\"")
 
-    outputFile = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        val resolver = context.contentResolver
-        val audioCollection = MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-        val audioDetails = ContentValues().apply {
-            put(MediaStore.Audio.Media.DISPLAY_NAME, currentFileName)
-            put(MediaStore.Audio.Media.MIME_TYPE, "audio/3gpp")
-            put(MediaStore.Audio.Media.RELATIVE_PATH, "Music/")
-        }
-        val audioUri = resolver.insert(audioCollection, audioDetails)
-        resolver.openFileDescriptor(audioUri!!, "w")?.fileDescriptor?.let {
-            recorder.setOutputFile(it)
-            audioUri.toString()
-        } ?: throw IOException("Failed to create MediaStore entry")
-    } else {
-        "${context.getExternalFilesDir(null)?.absolutePath}/$currentFileName"
-    }
-
-    // Guarda la ruta del archivo de audio
-    audioFilePath = outputFile
+    outputFile = "${context.getExternalFilesDir(null)?.absolutePath}/$currentFileName"
 
     try {
         recorder.apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
             setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
             setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+            setOutputFile(outputFile)
             prepare()
             start()
         }
@@ -83,10 +62,9 @@ fun stopRecording(context: Context) {
 }
 
 fun playRecording(context: Context, onCompletion: () -> Unit) {
-    mediaPlayer = MediaPlayer().apply {
+    val mediaPlayer = MediaPlayer().apply {
         try {
-            // Utiliza la ruta del archivo de audio almacenada
-            setDataSource(context, Uri.parse(audioFilePath))
+            setDataSource(outputFile)
             prepare()
             start()
             setOnCompletionListener {
@@ -99,31 +77,73 @@ fun playRecording(context: Context, onCompletion: () -> Unit) {
     }
 }
 
-
 fun stopPlaying() {
     mediaPlayer?.release()
     mediaPlayer = null
 }
 
-fun evaluateRecording(context: Context): Int {
-    val externalStorageDir = context.getExternalFilesDir(null)
+//fun getHighestDecibel(filePath: String): Double {
+//    val minBufferSize = AudioRecord.getMinBufferSize(44100,
+//        AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
+//    val audioRecord = AudioRecord(MediaRecorder.AudioSource.MIC, 44100,
+//        AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, minBufferSize)
+//    val buffer = ShortArray(minBufferSize)
+//    audioRecord.startRecording()
+//
+//    var maxAmplitude = 0
+//
+//    while (true) {
+//        val readSize = audioRecord.read(buffer, 0, minBufferSize)
+//        if (readSize < 0) {
+//            break
+//        }
+//        for (i in 0 until readSize) {
+//            val amplitude = abs(buffer[i].toInt())
+//            if (amplitude > maxAmplitude) {
+//                maxAmplitude = amplitude
+//            }
+//        }
+//    }
+//
+//    audioRecord.stop()
+//    audioRecord.release()
+//
+//    // Convertir la amplitud máxima a decibelios utilizando la fórmula.
+//    val maxDecibel = 20 * Math.log10(maxAmplitude.toDouble() / 32767.0)
+//
+//    return maxDecibel
+//}
+//
+//fun evaluateRecording(context: Context): Int {
+//    val highestDecibel = getHighestDecibel(outputFile)
+//
+//    // Aquí puedes realizar cualquier evaluación o análisis adicional según el decibelio más alto obtenido.
+//    // Por ejemplo, puedes establecer un umbral y clasificar el resultado como bueno, malo, etc.
+//
+//    // En este ejemplo simple, solo redondearemos el valor del decibelio más alto y lo devolveremos como resultado.
+//    return highestDecibel.toInt()
+//}
 
-    // Utiliza el nombre del archivo actual con la extensión .3ga para evaluar la grabación.
-    val audioFile = File(externalStorageDir, currentFileName)
+fun evaluateRecording(context: Context): Int {
+    val audioFileName = "$currentFileName"
+    val audioFilePath = File(context.getExternalFilesDir(null), currentFileName).absolutePath
+
+    Log.d("Evaluation", "Evaluando archivo de audio: $audioFileName en la ruta: $audioFilePath")
+
+    val audioFile = File(audioFilePath)
 
     if (!audioFile.exists()) {
-        Log.e("Evaluation", "El archivo de audio no existe en la ubicación esperada: ${audioFile.absolutePath}")
+        Log.e("Evaluation", "El archivo de audio no existe en la ubicación esperada: $audioFilePath")
         return 0 // No hay archivo para evaluar
     }
 
     var maxAmplitude = 0
     val mediaPlayer = MediaPlayer()
     try {
-        mediaPlayer.setDataSource(audioFile.absolutePath)
+        mediaPlayer.setDataSource(audioFile.path)
         mediaPlayer.prepare()
         mediaPlayer.start()
 
-        // Utiliza un temporizador para verificar la amplitud mientras se reproduce el audio
         val timer = object : CountDownTimer(mediaPlayer.duration.toLong(), 100) {
             override fun onTick(millisUntilFinished: Long) {
                 val amplitude = mediaPlayer.audioSessionId
@@ -145,7 +165,7 @@ fun evaluateRecording(context: Context): Int {
         return 0
     }
 
-    // Convierte la amplitud máxima en un valor de 1 a 100
     val maxDb = 20 * log10(maxAmplitude.toDouble() / 32768.0)
     return (maxDb / 120 * 100).toInt().coerceIn(1, 100)
 }
+

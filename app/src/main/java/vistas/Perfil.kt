@@ -1,8 +1,11 @@
 package vistas
 import android.content.ContentValues.TAG
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,6 +40,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -52,8 +57,11 @@ import com.example.soundcore.ui.theme.backgroundClaro
 import com.example.soundcore.ui.theme.backgroundOscuro
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import controladores.obtenerDatosUsuario
+import controladores.obtenerUrlFotoPerfil
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import modelos.Paths
 
 
@@ -64,11 +72,155 @@ fun PerfilScreen(navController: NavController) {
     var userData by remember { mutableStateOf<Map<String, Any>?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     val coroutineScope = rememberCoroutineScope()
+    var fotoPerfilBitmap by remember { mutableStateOf<Bitmap?>(null) }
 
     LaunchedEffect(currentUser?.uid) {
         currentUser?.uid?.let { uid ->
             coroutineScope.launch {
                 userData = obtenerDatosUsuario(uid)
+                val fotoPerfilUrl = obtenerUrlFotoPerfil(uid)
+                fotoPerfilUrl?.let {
+                    // Descargar la imagen de Firebase Storage
+                    fotoPerfilBitmap = descargarImagen(it)
+                }
+                isLoading = false
+            }
+        } ?: run {
+            isLoading = false
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Perfil", fontSize = 20.sp, color = Color.White, fontWeight = FontWeight.Bold) },
+                backgroundColor = backgroundOscuro,
+                actions = {
+                    IconButton(onClick = { navController.navigate("ajustes") }) {
+                        Icon(Icons.Default.Settings, contentDescription = "Ajustes", tint = Color.White)
+                    }
+                }
+            )
+        },
+        content = { paddingValues ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(backgroundOscuro)
+                    .padding(paddingValues),
+                contentAlignment = Alignment.TopStart,
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.padding(8.dp))
+                } else {
+                    userData?.let { data ->
+                        Column(horizontalAlignment = Alignment.Start, modifier = Modifier.padding(8.dp)) {
+                            Row(verticalAlignment = Alignment.Top) {
+                                fotoPerfilBitmap?.let { bitmap ->
+                                    // Mostrar la imagen de la foto de perfil
+                                    Image(
+                                        bitmap = bitmap.asImageBitmap(),
+                                        contentDescription = "Foto de perfil",
+                                        modifier = Modifier
+                                            .size(80.dp)
+                                            .clip(CircleShape)
+                                            .border(2.dp, Color.White, CircleShape),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } ?: run {
+                                    // Mostrar un círculo azul claro en lugar de la foto de perfil si no está disponible
+                                    Image(
+                                        painter = painterResource(id = R.drawable.google_logo),
+                                        contentDescription = "Foto de perfil",
+                                        modifier = Modifier.size(80.dp)
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                // Nombre y correo electrónico del usuario
+                                Column {
+                                    Text(
+                                        text = "${data["nombreUsuario"] ?: "Nombre no disponible"}",
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 20.sp
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(text = "${data["email"] ?: "Correo no disponible"}", color = Color.Gray)
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // Editar perfil y Estadísticas
+                            Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                                Button(
+                                    onClick = { navController.navigate("editarPerfil") },
+                                    shape = RoundedCornerShape(4.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        backgroundColor = azul1
+                                    ),
+                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                ) {
+                                    Text(text = "Editar perfil", color = Color.White)
+                                }
+
+                                Button(
+                                    onClick = { /* Navegar a la pantalla de estadísticas del usuario */ },
+                                    shape = RoundedCornerShape(4.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        backgroundColor = azul1
+                                    )
+                                ) {
+                                    Text(text = "Estadísticas", color = Color.White)
+                                }
+                            }
+                        }
+                    } ?: run {
+                        Text(text = "Error al cargar datos del usuario", color = Color.White)
+                    }
+                }
+            }
+        }
+    )
+}
+
+// Función para descargar la imagen desde Firebase Storage y convertirla en un Bitmap
+suspend fun descargarImagen(url: String): Bitmap? {
+    return try {
+        val storageReference = FirebaseStorage.getInstance().getReferenceFromUrl(url)
+        val fotoPerfilBytes = storageReference.getBytes(10 * 1024 * 1024).await() // Descargar hasta 10MB
+        BitmapFactory.decodeByteArray(fotoPerfilBytes, 0, fotoPerfilBytes.size)
+    } catch (e: Exception) {
+        Log.e("PerfilScreen", "Error al descargar la imagen de perfil: $e")
+        null
+    }
+}
+
+
+
+
+
+/*
+
+@Composable
+fun PerfilScreen(navController: NavController) {
+    val currentUser = FirebaseAuth.getInstance().currentUser
+    var userData by remember { mutableStateOf<Map<String, Any>?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+    val coroutineScope = rememberCoroutineScope()
+    var fotoPerfilBitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+    LaunchedEffect(currentUser?.uid) {
+        currentUser?.uid?.let { uid ->
+            coroutineScope.launch {
+                userData = obtenerDatosUsuario(uid)
+                val fotoPerfilUrl = obtenerUrlFotoPerfil(uid)
+                fotoPerfilUrl?.let {
+                    // Descargar la imagen de Firebase Storage
+                    fotoPerfilBitmap = descargarImagen(it)
+                }
                 isLoading = false
             }
         } ?: run {
@@ -101,48 +253,39 @@ fun PerfilScreen(navController: NavController) {
                 } else {
                     userData?.let { data ->
                         Column(horizontalAlignment = Alignment.Start, modifier = Modifier.padding(8.dp)) {
-                            // Fila para foto de perfil, nombre y correo electrónico
                             Row(verticalAlignment = Alignment.Top) {
-                                // Mostrar un círculo azul claro en lugar de la foto de perfil
-                                Image(
-                                    painter = painterResource(id = R.drawable.google_logo),
-                                    contentDescription = "Foto de perfil",
-                                    modifier = Modifier.size(80.dp) // Tamaño de la imagen
-                                )
+                                fotoPerfilBitmap?.let { bitmap ->
+                                    // Mostrar la imagen de la foto de perfil
+                                    Image(
+                                        bitmap = bitmap.asImageBitmap(),
+                                        contentDescription = "Foto de perfil",
+                                        modifier = Modifier
+                                            .size(80.dp)
+                                            .clip(CircleShape)
+                                            .border(2.dp, Color.White, CircleShape),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } ?: run {
+                                    // Mostrar un círculo azul claro en lugar de la foto de perfil si no está disponible
+                                    Image(
+                                        painter = painterResource(id = R.drawable.google_logo),
+                                        contentDescription = "Foto de perfil",
+                                        modifier = Modifier.size(80.dp)
+                                    )
+                                }
 
                                 Spacer(modifier = Modifier.width(8.dp))
 
-                                // Muestra el nombre y el correo electrónico del usuario
+                                // Nombre y correo electrónico del usuario
                                 Column {
-                                    Text(text = "${data["nombreUsuario"] ?: "Nombre no disponible"}", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                                    Text(
+                                        text = "${data["nombreUsuario"] ?: "Nombre no disponible"}",
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 20.sp
+                                    )
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(text = "${data["email"] ?: "Correo no disponible"}", color = Color.Gray)
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            // Editar perfil y Estadísticas
-                            Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                                Button(
-                                    onClick = { /* Navegar a la pantalla de perfil del usuario */ },
-                                    shape = RoundedCornerShape(4.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        backgroundColor = Color(0xFF1565C0)
-                                    ),
-                                    modifier = Modifier.padding(horizontal = 8.dp)
-                                ) {
-                                    Text(text = "Editar perfil", color = Color.White)
-                                }
-
-                                Button(
-                                    onClick = { /* Navegar a la pantalla de estadísticas del usuario */ },
-                                    shape = RoundedCornerShape(4.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        backgroundColor = Color(0xFF1565C0)
-                                    )
-                                ) {
-                                    Text(text = "Estadísticas", color = Color.White)
                                 }
                             }
                         }
@@ -155,13 +298,20 @@ fun PerfilScreen(navController: NavController) {
     )
 }
 
+// Función para descargar la imagen desde Firebase Storage y convertirla en un Bitmap
+suspend fun descargarImagen(url: String): Bitmap? {
+    return try {
+        val storageReference = FirebaseStorage.getInstance().getReferenceFromUrl(url)
+        val fotoPerfilBytes = storageReference.getBytes(10 * 1024 * 1024).await() // Descargar hasta 10MB
+        BitmapFactory.decodeByteArray(fotoPerfilBytes, 0, fotoPerfilBytes.size)
+    } catch (e: Exception) {
+        Log.e("PerfilScreen", "Error al descargar la imagen de perfil: $e")
+        null
+    }
+}
 
 
-
-
-
-
-
+*/
 
 
 

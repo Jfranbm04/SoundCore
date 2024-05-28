@@ -7,11 +7,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import com.google.firebase.auth.FirebaseAuth
 import android.content.Context
+import android.net.Uri
 import android.provider.Settings.Global.getString
 import androidx.navigation.NavController
 import com.example.soundcore.R
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 import modelos.Paths
 
@@ -36,8 +38,10 @@ fun comprobarLogin(navController: NavController, contexto: Context, email: Strin
         }
 }
 
+//private const val TAG = "UserController"
+
 // Función para comprobar registro
-fun comprobarRegistro(navController: NavController, contexto: Context, nombreUsuario : String, email: String, contraseña: String){
+fun comprobarRegistro(navController: NavController, contexto: Context, nombreUsuario: String, email: String, contraseña: String, fotoPerfil: Uri?) {
     val auth = FirebaseAuth.getInstance()
 
     auth.createUserWithEmailAndPassword(email, contraseña)
@@ -45,27 +49,52 @@ fun comprobarRegistro(navController: NavController, contexto: Context, nombreUsu
             if (task.isSuccessful) {
                 val user = auth.currentUser
                 Toast.makeText(contexto, "Te has registrado correctamente.", Toast.LENGTH_SHORT).show()
-                navController.navigate(Paths.pantallaPrincipal.path) // Navigate to main screen
+                navController.navigate(Paths.pantallaPrincipal.path) // Navegar a la pantalla principal
 
-                // Añadir usuario a firestore
-                crearUsuarioFirestore(user!!.uid, nombreUsuario, email)
+                // Subir foto de perfil y crear usuario en Firestore
+                if (user != null) {
+                    subirFotoPerfil(user.uid, fotoPerfil) { url ->
+                        crearUsuarioFirestore(user.uid, nombreUsuario, email, url)
+                    }
+                }
             } else {
                 Log.w(TAG, "createUserWithEmailAndPassword:failure", task.exception)
-                val errorMessage = task.exception!!.message.toString()
+                val errorMessage = task.exception?.message.toString()
                 Toast.makeText(contexto, "Error al registrarse: $errorMessage", Toast.LENGTH_SHORT).show()
             }
         }
 }
 
-// Añadir usuario a firestore
-private fun crearUsuarioFirestore(uid: String, nombreUsuario: String, email: String) {
+// Función para subir la foto de perfil a Firebase Storage
+private fun subirFotoPerfil(uid: String, fotoPerfil: Uri?, onSuccess: (String) -> Unit) {
+    if (fotoPerfil == null) {
+        onSuccess("") // No hay foto de perfil, continuar con URL vacía
+        return
+    }
+
+    val storage = FirebaseStorage.getInstance()
+    val storageRef = storage.reference.child("fotos_perfil/$uid.jpg")
+
+    val uploadTask = storageRef.putFile(fotoPerfil)
+    uploadTask.addOnSuccessListener {
+        storageRef.downloadUrl.addOnSuccessListener { uri ->
+            onSuccess(uri.toString())
+        }
+    }.addOnFailureListener { exception ->
+        Log.e(TAG, "Error al subir la foto de perfil", exception)
+        onSuccess("") // Continuar con URL vacía en caso de fallo
+    }
+}
+
+// Añadir usuario a Firestore
+private fun crearUsuarioFirestore(uid: String, nombreUsuario: String, email: String, fotoPerfilUrl: String) {
     val firestore = FirebaseFirestore.getInstance()
     val docRef = firestore.collection("usuarios").document(uid)
 
     val userData = hashMapOf(
         "nombreUsuario" to nombreUsuario,
         "email" to email,
-        "contraseña" to ""
+        "fotoPerfilUrl" to fotoPerfilUrl
     )
 
     docRef.set(userData)
@@ -91,6 +120,17 @@ suspend fun obtenerDatosUsuario(uid: String): Map<String, Any>? {
         }
     } catch (e: Exception) {
         Log.e("Firestore", "Error sacando los datos del usuario", e)
+        null
+    }
+}
+
+// Sacar imagen usuario storage
+suspend fun obtenerUrlFotoPerfil(uid: String): String? {
+    return try {
+        val document = FirebaseFirestore.getInstance().collection("usuarios").document(uid).get().await()
+        document.getString("fotoPerfilUrl")
+    } catch (e: Exception) {
+        Log.e("UserController", "Error al obtener la URL de la foto de perfil: $e")
         null
     }
 }

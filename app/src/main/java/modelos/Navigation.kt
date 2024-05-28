@@ -13,6 +13,7 @@ import vistas.LoginScreen
 import vistas.MainScreen
 import vistas.PerfilScreen
 import vistas.SignUpScreen
+import vistas.editarPerfilScreen
 
 @Composable
 fun AppNavigation(){
@@ -39,6 +40,7 @@ fun AppNavigation(){
         composable(route = BottomNavItem.Buscar.route) { BuscarScreen(navController) }
         composable(route = BottomNavItem.Perfil.route) { PerfilScreen(navController) }
         composable(route = Paths.Ajustes.path) { AjustesScreen(navController) }
+        composable(route = Paths.EditarPerfil.path) { editarPerfilScreen(navController) }
     }
 }
 

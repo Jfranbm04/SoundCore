@@ -1,51 +1,27 @@
 package vistas
 
-import android.content.Intent
-import android.util.Log
+import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.Divider
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -58,22 +34,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.util.PatternsCompat
 import androidx.navigation.NavController
+import androidx.core.graphics.drawable.toBitmap
 import com.example.soundcore.R
 import com.example.soundcore.ui.theme.azul1
-import com.example.soundcore.ui.theme.azul2
-import com.example.soundcore.ui.theme.azul3
 import com.example.soundcore.ui.theme.azul4
-
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.auth.User
 import controladores.comprobarRegistro
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import modelos.Paths
-
-private lateinit var auth: FirebaseAuth
 
 @Composable
 fun SignUpScreen(navController: NavController) {
@@ -84,13 +51,24 @@ fun SignUpScreen(navController: NavController) {
     ) {
         HeaderSignUp(Modifier.align(Alignment.TopCenter), navController)
         Spacer(modifier = Modifier.height(50.dp))
-        //Body(Modifier.align(Alignment.Center))
     }
 }
 
 @Composable
-fun HeaderSignUp(modifier: Modifier,navController: NavController) {
+fun HeaderSignUp(modifier: Modifier, navController: NavController) {
     logoSignUp(navController)
+}
+
+@Composable
+fun headerRegistro() {
+    Text(
+        text = "REGÍSTRATE \n EN SOUNDCORE",
+        modifier = Modifier.fillMaxWidth(),
+        fontSize = 30.sp,
+        textAlign = TextAlign.Center,
+        fontWeight = FontWeight.ExtraBold,
+        color = azul4
+    )
 }
 
 @Composable
@@ -98,14 +76,13 @@ fun logoSignUp(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            // .padding(16.dp)
     ) {
         Image(
             painter = painterResource(id = R.drawable.soundcore_logo),
             contentDescription = null,
             modifier = Modifier
-                .size(50.dp) // Tamaño de la imagen
-                .align(alignment = Alignment.Start)
+                .size(50.dp)
+                .align(Alignment.Start)
                 .clickable {
                     navController.popBackStack()
                 }
@@ -114,7 +91,6 @@ fun logoSignUp(navController: NavController) {
         Spacer(modifier = Modifier.height(30.dp))
         headerRegistro()
         Spacer(modifier = Modifier.height(20.dp))
-        // Divider con padding
         Divider(
             color = Color.Gray,
             modifier = Modifier
@@ -128,10 +104,9 @@ fun logoSignUp(navController: NavController) {
 
         Spacer(modifier = Modifier.height(20.dp))
         VolverParaIniciarSesion(navController)
-
-
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun camposRegistro(navController: NavController) {
@@ -139,24 +114,27 @@ fun camposRegistro(navController: NavController) {
     var nombreUsuario by remember { mutableStateOf("") }
     var correo by remember { mutableStateOf("") }
     var contraseña by remember { mutableStateOf("") }
+    var fotoPerfil by remember { mutableStateOf<Uri?>(null) }
     var aceptarProteccionDatos by remember { mutableStateOf(false) }
     var dialogRGPD by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var showPassword by rememberSaveable { mutableStateOf(false) }
 
-
-    // AlertDialog para la protección de datos
     if (dialogRGPD) {
         AlertDialog(
             onDismissRequest = { dialogRGPD = false },
             title = { Text(text = "Política de Protección de Datos") },
-            text = { Text(text = "Política de Protección de Datos\n" +
-                    "\n" +
-                    "Nos comprometemos a proteger y respetar su privacidad. Esta política explica cuándo y por qué recopilamos información personal sobre las personas que visitan nuestra app, cómo la utilizamos, las condiciones bajo las cuales podemos divulgarla a otros y cómo la mantenemos segura.\n" +
-                    "\n" +
-                    "¿Qué información recopilamos?\n" +
-                    "\n" +
-                    "Recopilamos información sobre usted cuando se registra en nuestra app, añade datos personales o hace alguna operación dentro de ésta. La información recopilada puede incluir su nombre y dirección de correo electrónico.") },
+            text = {
+                Text(
+                    text = "Política de Protección de Datos\n" +
+                            "\n" +
+                            "Nos comprometemos a proteger y respetar su privacidad. Esta política explica cuándo y por qué recopilamos información personal sobre las personas que visitan nuestra app, cómo la utilizamos, las condiciones bajo las cuales podemos divulgarla a otros y cómo la mantenemos segura.\n" +
+                            "\n" +
+                            "¿Qué información recopilamos?\n" +
+                            "\n" +
+                            "Recopilamos información sobre usted cuando se registra en nuestra app, añade datos personales o hace alguna operación dentro de ésta. La información recopilada puede incluir su nombre y dirección de correo electrónico."
+                )
+            },
             confirmButton = {
                 TextButton(onClick = {
                     aceptarProteccionDatos = true
@@ -166,9 +144,7 @@ fun camposRegistro(navController: NavController) {
                 }
             },
             dismissButton = {
-                TextButton(onClick = {
-                    dialogRGPD = false
-                }) {
+                TextButton(onClick = { dialogRGPD = false }) {
                     Text("Cancelar")
                 }
             }
@@ -185,8 +161,15 @@ fun camposRegistro(navController: NavController) {
             correo.isEmpty() -> mostrarToast("No has proporcionado un correo.")
             contraseña.isEmpty() -> mostrarToast("No has escrito una contraseña.")
             nombreUsuario.isEmpty() -> mostrarToast("No has escrito un nombre de usuario.")
-            else -> comprobarRegistro(navController, contexto, nombreUsuario, correo, contraseña)
+            fotoPerfil == null -> mostrarToast("No has seleccionado una foto de perfil.")
+            else -> comprobarRegistro(navController, contexto, nombreUsuario, correo, contraseña, fotoPerfil)
         }
+    }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        fotoPerfil = uri
     }
 
     Column(
@@ -250,17 +233,52 @@ fun camposRegistro(navController: NavController) {
             IconButton(
                 onClick = { showPassword = !showPassword },
                 modifier = Modifier.background(azul4)
-
             ) {
                 val icon: Painter = if (showPassword) {
-                    painterResource(id = R.drawable.visibility) // ojo abierto
+                    painterResource(id = R.drawable.visibility)
                 } else {
-                    painterResource(id = R.drawable.visibility_off) // ojo cerrado
+                    painterResource(id = R.drawable.visibility_off)
                 }
                 Icon(
                     painter = icon,
                     contentDescription = if (showPassword) "Ocultar contraseña" else "Mostrar contraseña",
                     modifier = Modifier.fillMaxHeight()
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(
+            onClick = { launcher.launch("image/*") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(4.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = azul1
+            )
+        ) {
+            Text(text = "Seleccionar foto de perfil", color = Color.White, fontSize = 16.sp)
+        }
+
+        fotoPerfil?.let {
+            val context = LocalContext.current
+            val imageBitmap = remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+            LaunchedEffect(it) {
+                context.contentResolver.openInputStream(it)?.let { inputStream ->
+                    imageBitmap.value = android.graphics.BitmapFactory.decodeStream(inputStream)
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            imageBitmap.value?.let { bitmap ->
+                Image(
+                    bitmap = bitmap.asImageBitmap(),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(CircleShape)
+                        .background(Color.Gray),
+                    contentScale = ContentScale.Crop
                 )
             }
         }
@@ -277,7 +295,6 @@ fun camposRegistro(navController: NavController) {
                     checkedColor = azul1,
                     uncheckedColor = azul4
                 )
-
             )
             Text(text = "Acepto la ", color = Color.White)
             Text(
@@ -287,6 +304,9 @@ fun camposRegistro(navController: NavController) {
                 modifier = Modifier.clickable { dialogRGPD = true }
             )
         }
+
+
+
         Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = { comprobarRegistro() },
@@ -298,7 +318,7 @@ fun camposRegistro(navController: NavController) {
                 containerColor = azul1
             )
         ) {
-            Text(text= "Registrarme", color = Color.White, fontSize = 25.sp)
+            Text(text = "Registrarme", color = Color.White, fontSize = 25.sp)
         }
         if (errorMessage != null) {
             Text(
@@ -310,24 +330,6 @@ fun camposRegistro(navController: NavController) {
     }
 }
 
-
-
-// Header registro
-@Composable
-fun headerRegistro() {
-    Text(
-        text = "REGÍSTRATE \n EN SOUNDCORE",
-
-        modifier = Modifier
-            .fillMaxWidth(),
-        fontSize = 30.sp,
-        textAlign = TextAlign.Center,
-        fontWeight = FontWeight.ExtraBold,
-        color = azul4
-    )
-}
-
-// Función para hacer el texto clickable
 @Composable
 fun VolverParaIniciarSesion(navController: NavController) {
     val annotatedString = buildAnnotatedString {
@@ -358,5 +360,3 @@ fun VolverParaIniciarSesion(navController: NavController) {
         )
     }
 }
-
-
