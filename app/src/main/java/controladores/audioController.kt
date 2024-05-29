@@ -14,24 +14,22 @@ import android.provider.MediaStore
 import java.io.File
 import kotlin.math.log10
 import android.media.MediaMetadataRetriever
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
 
+// Variables globales para almacenar el archivo de salida y el nombre del archivo.
 
 private val recorder = MediaRecorder()
 private var outputFile: String = ""
 private var mediaPlayer: MediaPlayer? = null
-
-// Variables globales para almacenar el archivo de salida y el nombre del archivo.
 private lateinit var currentFileName: String
+private val storageReference: StorageReference by lazy {
+    FirebaseStorage.getInstance().reference
+}
 
 fun startRecording(context: Context) {
     val timestamp = System.currentTimeMillis()
     currentFileName = "audiorecord_$timestamp.3gp"
-
-    Log.d("AudioRecorderController", "Nombre del archivo de audio: ${
-        context.getExternalFilesDir(
-            null
-        )?.absolutePath
-    }/$currentFileName\"")
 
     outputFile = "${context.getExternalFilesDir(null)?.absolutePath}/$currentFileName"
 
@@ -55,14 +53,29 @@ fun stopRecording(context: Context) {
         recorder.stop()
         recorder.reset()
         Toast.makeText(context, "Grabación exitosa", Toast.LENGTH_SHORT).show()
+        uploadAudioToFirebase(context)
     } catch (e: RuntimeException) {
         Log.e("AudioRecorderController", "stop() failed")
         Toast.makeText(context, "Error al detener la grabación", Toast.LENGTH_SHORT).show()
     }
 }
 
+private fun uploadAudioToFirebase(context: Context) {
+    val audioFile = Uri.fromFile(File(outputFile))
+    val audioRef = storageReference.child("audios/$currentFileName")
+
+    audioRef.putFile(audioFile)
+        .addOnSuccessListener {
+            Log.e("AudioRecorderController", "Audio subido a firebase")
+        }
+        .addOnFailureListener { e ->
+            Log.e("AudioRecorderController", "Error al subir el audio a Firebase", e)
+            Toast.makeText(context, "Error al subir el audio", Toast.LENGTH_SHORT).show()
+        }
+}
+
 fun playRecording(context: Context, onCompletion: () -> Unit) {
-    val mediaPlayer = MediaPlayer().apply {
+    mediaPlayer = MediaPlayer().apply {
         try {
             setDataSource(outputFile)
             prepare()
@@ -81,6 +94,51 @@ fun stopPlaying() {
     mediaPlayer?.release()
     mediaPlayer = null
 }
+
+fun evaluateRecording(context: Context): Int {
+    val audioFilePath = File(context.getExternalFilesDir(null), currentFileName).absolutePath
+
+    Log.d("Evaluation", "Evaluando archivo de audio: $currentFileName en la ruta: $audioFilePath")
+
+    val audioFile = File(audioFilePath)
+
+    if (!audioFile.exists()) {
+        Log.e("Evaluation", "El archivo de audio no existe en la ubicación esperada: $audioFilePath")
+        return 0
+    }
+
+    var maxAmplitude = 0
+    val mediaPlayer = MediaPlayer()
+    try {
+        mediaPlayer.setDataSource(audioFile.path)
+        mediaPlayer.prepare()
+        mediaPlayer.start()
+
+        val timer = object : CountDownTimer(mediaPlayer.duration.toLong(), 100) {
+            override fun onTick(millisUntilFinished: Long) {
+                val amplitude = mediaPlayer.audioSessionId
+                if (amplitude > maxAmplitude) {
+                    maxAmplitude = amplitude
+                }
+            }
+
+            override fun onFinish() {
+                mediaPlayer.stop()
+                mediaPlayer.release()
+            }
+        }
+        timer.start()
+    } catch (e: Exception) {
+        Log.e("Evaluation", "Error al reproducir el archivo de audio: ${e.message}")
+        e.printStackTrace()
+        mediaPlayer.release()
+        return 0
+    }
+
+    val maxDb = 20 * log10(maxAmplitude.toDouble() / 32768.0)
+    return (maxDb / 120 * 100).toInt().coerceIn(1, 100)
+}
+
 
 //fun getHighestDecibel(filePath: String): Double {
 //    val minBufferSize = AudioRecord.getMinBufferSize(44100,
@@ -123,49 +181,3 @@ fun stopPlaying() {
 //    // En este ejemplo simple, solo redondearemos el valor del decibelio más alto y lo devolveremos como resultado.
 //    return highestDecibel.toInt()
 //}
-
-fun evaluateRecording(context: Context): Int {
-    val audioFileName = "$currentFileName"
-    val audioFilePath = File(context.getExternalFilesDir(null), currentFileName).absolutePath
-
-    Log.d("Evaluation", "Evaluando archivo de audio: $audioFileName en la ruta: $audioFilePath")
-
-    val audioFile = File(audioFilePath)
-
-    if (!audioFile.exists()) {
-        Log.e("Evaluation", "El archivo de audio no existe en la ubicación esperada: $audioFilePath")
-        return 0 // No hay archivo para evaluar
-    }
-
-    var maxAmplitude = 0
-    val mediaPlayer = MediaPlayer()
-    try {
-        mediaPlayer.setDataSource(audioFile.path)
-        mediaPlayer.prepare()
-        mediaPlayer.start()
-
-        val timer = object : CountDownTimer(mediaPlayer.duration.toLong(), 100) {
-            override fun onTick(millisUntilFinished: Long) {
-                val amplitude = mediaPlayer.audioSessionId
-                if (amplitude > maxAmplitude) {
-                    maxAmplitude = amplitude
-                }
-            }
-
-            override fun onFinish() {
-                mediaPlayer.stop()
-                mediaPlayer.release()
-            }
-        }
-        timer.start()
-    } catch (e: Exception) {
-        Log.e("Evaluation", "Error al reproducir el archivo de audio: ${e.message}")
-        e.printStackTrace()
-        mediaPlayer.release()
-        return 0
-    }
-
-    val maxDb = 20 * log10(maxAmplitude.toDouble() / 32768.0)
-    return (maxDb / 120 * 100).toInt().coerceIn(1, 100)
-}
-
