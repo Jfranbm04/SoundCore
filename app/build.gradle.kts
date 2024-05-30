@@ -74,6 +74,8 @@ dependencies {
     implementation ("androidx.compose.material:material:1.6.7")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage-ktx:21.0.0")
+    implementation ("com.arthenica:ffmpeg-kit-full:4.5.LTS")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0")
 
 
     testImplementation("junit:junit:4.13.2")

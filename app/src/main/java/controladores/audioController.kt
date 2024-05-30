@@ -16,6 +16,12 @@ import kotlin.math.log10
 import android.media.MediaMetadataRetriever
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
+import com.arthenica.ffmpegkit.FFmpegKit
+import com.arthenica.ffmpegkit.ReturnCode
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 // Variables globales para almacenar el archivo de salida y el nombre del archivo.
 
@@ -48,12 +54,19 @@ fun startRecording(context: Context) {
     }
 }
 
-fun stopRecording(context: Context) {
+suspend fun stopRecording(context: Context) {
     try {
         recorder.stop()
         recorder.reset()
         Toast.makeText(context, "Grabación exitosa", Toast.LENGTH_SHORT).show()
         uploadAudioToFirebase(context)
+
+        val maxDecibel = withContext(Dispatchers.IO) {
+            getMaxDecibel(context)
+        }
+
+        val normalizedDecibel = normalizeDecibel(maxDecibel)
+        Log.d("AudioRecorderController", "Decibelio más alto (normalizado): $normalizedDecibel")
     } catch (e: RuntimeException) {
         Log.e("AudioRecorderController", "stop() failed")
         Toast.makeText(context, "Error al detener la grabación", Toast.LENGTH_SHORT).show()
@@ -139,45 +152,43 @@ fun evaluateRecording(context: Context): Int {
     return (maxDb / 120 * 100).toInt().coerceIn(1, 100)
 }
 
+// Método que saca el decibelio máximo (sacado de internet)
+suspend fun getMaxDecibel(context: Context): Double {
+    val command = "-i $outputFile -filter:a volumedetect -f null /dev/null"
 
-//fun getHighestDecibel(filePath: String): Double {
-//    val minBufferSize = AudioRecord.getMinBufferSize(44100,
-//        AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
-//    val audioRecord = AudioRecord(MediaRecorder.AudioSource.MIC, 44100,
-//        AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, minBufferSize)
-//    val buffer = ShortArray(minBufferSize)
-//    audioRecord.startRecording()
-//
-//    var maxAmplitude = 0
-//
-//    while (true) {
-//        val readSize = audioRecord.read(buffer, 0, minBufferSize)
-//        if (readSize < 0) {
-//            break
-//        }
-//        for (i in 0 until readSize) {
-//            val amplitude = abs(buffer[i].toInt())
-//            if (amplitude > maxAmplitude) {
-//                maxAmplitude = amplitude
-//            }
-//        }
-//    }
-//
-//    audioRecord.stop()
-//    audioRecord.release()
-//
-//    // Convertir la amplitud máxima a decibelios utilizando la fórmula.
-//    val maxDecibel = 20 * Math.log10(maxAmplitude.toDouble() / 32767.0)
-//
-//    return maxDecibel
-//}
-//
-//fun evaluateRecording(context: Context): Int {
-//    val highestDecibel = getHighestDecibel(outputFile)
-//
-//    // Aquí puedes realizar cualquier evaluación o análisis adicional según el decibelio más alto obtenido.
-//    // Por ejemplo, puedes establecer un umbral y clasificar el resultado como bueno, malo, etc.
-//
-//    // En este ejemplo simple, solo redondearemos el valor del decibelio más alto y lo devolveremos como resultado.
-//    return highestDecibel.toInt()
-//}
+    val deferred = CompletableDeferred<Double>()
+
+    FFmpegKit.executeAsync(command) { session ->
+        val returnCode = session.returnCode
+        if (ReturnCode.isSuccess(returnCode)) {
+            // Procesar la salida para encontrar el volumen máximo
+            val output = session.allLogsAsString
+            val regex = Regex("max_volume: (-?\\d+\\.\\d+) dB")
+            val match = regex.find(output)
+
+            if (match != null) {
+                val maxVolume = match.groupValues[1].toDouble()
+                deferred.complete(maxVolume)
+            } else {
+                deferred.complete(Double.NaN) // Si no se encuentra el volumen máximo
+            }
+        } else {
+            Log.e("FFmpeg", "Error ejecutando comando FFmpeg")
+            deferred.completeExceptionally(RuntimeException("Error ejecutando comando FFmpeg"))
+        }
+    }
+
+    return deferred.await()
+}
+
+// Define la función normalizeDecibel
+fun normalizeDecibel(decibel: Double): Int {
+//    Establezco los valores para hacer el rango de puntuación
+    val minDb = -40.0
+    val maxDb = 0.0
+    val range = maxDb - minDb
+
+    val normalized = ((decibel - minDb) * (100 - 1) / range) + 1
+
+    return normalized.toInt().coerceIn(1, 100)
+}
