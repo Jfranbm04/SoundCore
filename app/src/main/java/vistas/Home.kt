@@ -42,11 +42,19 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.TopAppBar
+import androidx.compose.material3.Scaffold
 
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import com.example.soundcore.R
 import com.example.soundcore.ui.theme.azul4
+import com.example.soundcore.ui.theme.backgroundOscuro
 import controladores.playRecording
 import controladores.startRecording
 import controladores.stopRecording
@@ -128,134 +136,158 @@ fun HomeScreen(navController: NavController) {
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Transparent),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.google_logo),
+                            contentDescription = "App Icon",
+                            modifier = Modifier.size(30.dp),
+                            tint = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "SoundCore",fontSize = 20.sp, color = Color.White, fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
+                backgroundColor = backgroundOscuro
+            )
+        },
+        content = {paddingValues ->
             Box(
                 modifier = Modifier
-                    .size(150.dp)
-                    .clip(CircleShape)
-                    .background(buttonColor)
-                    .clickable {
-                        if (!isPlaying) {
-                            isPlaying = true
-                            buttonColor = azul2
-                        }
-                    }
-                    .padding(16.dp)
-                    .border(4.dp, Color.White, CircleShape),
+                    .fillMaxSize()
+                    .background(backgroundOscuro)
+                    .padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .background(Color.White, CircleShape),
-                    contentAlignment = Alignment.Center
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    if (isPlaying) {
-                        Icon(
-                            imageVector = Icons.Default.Clear,
-                            contentDescription = "Pause",
-                            modifier = Modifier.size(50.dp),
-                            tint = buttonColor
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.PlayArrow,
-                            contentDescription = "Play",
-                            modifier = Modifier.size(50.dp),
-                            tint = buttonColor
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            AnimatedVisibility(visible = showProgress) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    LinearProgressIndicator(
-                        progress = progress,
+                    Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 32.dp),
-                        color = buttonColor
-                    )
-                    Text(
-                        text = "Grabando audio...",
-                        color = Color.White,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
-            }
-
-            AnimatedVisibility(visible = showPlayback) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                        Button(
-                            onClick = {
-                                isPlayingBack = true
-                                playRecording(context) {
-                                    isPlayingBack = false
+                            .size(150.dp)
+                            .clip(CircleShape)
+                            .background(buttonColor)
+                            .clickable {
+                                if (!isPlaying) {
+                                    isPlaying = true
+                                    buttonColor = azul2
                                 }
-                            },
-                            shape = RoundedCornerShape(4.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = azul1),
-                            modifier = Modifier.padding(horizontal = 8.dp)
+                            }
+                            .padding(16.dp)
+                            .border(4.dp, Color.White, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(100.dp)
+                                .background(Color.White, CircleShape),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "Escucha tu palmada")
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Button(
-                            onClick = {
-                                val evaluation = evaluateRecording(context)
-                                Toast.makeText(context, "Evaluación: $evaluation", Toast.LENGTH_SHORT).show()
-                            },
-                            shape = RoundedCornerShape(4.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = azul2)
-                        ) {
-                            Text(text = "Enviar palmada")
+                            if (isPlaying) {
+                                Icon(
+                                    imageVector = Icons.Default.Clear,
+                                    contentDescription = "Pause",
+                                    modifier = Modifier.size(50.dp),
+                                    tint = buttonColor
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.PlayArrow,
+                                    contentDescription = "Play",
+                                    modifier = Modifier.size(50.dp),
+                                    tint = buttonColor
+                                )
+                            }
                         }
                     }
 
-                    // Mostrar la puntuación de la palmada
-                    audioScore?.let {
-                        Text(
-                            text = "Puntuación de la palmada: $it",
-                            color = Color.White,
-                            modifier = Modifier.padding(top = 16.dp)
-                        )
-                    }
-                }
-            }
+                    Spacer(modifier = Modifier.height(32.dp))
 
-            AnimatedVisibility(visible = showPlaybackProgress) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    LinearProgressIndicator(
-                        progress = playbackProgress,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 32.dp),
-                        color = buttonColor
-                    )
-                    Text(
-                        text = "Reproduciendo palmada...",
-                        color = Color.White,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
+                    AnimatedVisibility(visible = showProgress) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            LinearProgressIndicator(
+                                progress = progress,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 32.dp),
+                                color = buttonColor
+                            )
+                            Text(
+                                text = "Grabando audio...",
+                                color = Color.White,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        }
+                    }
+
+                    AnimatedVisibility(visible = showPlayback) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                                Button(
+                                    onClick = {
+                                        isPlayingBack = true
+                                        playRecording(context) {
+                                            isPlayingBack = false
+                                        }
+                                    },
+                                    shape = RoundedCornerShape(4.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = azul1),
+                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                ) {
+                                    Text(text = "Escucha tu palmada")
+                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                Button(
+                                    onClick = {
+                                        val evaluation = evaluateRecording(context)
+                                        Toast.makeText(context, "Evaluación: $evaluation", Toast.LENGTH_SHORT).show()
+                                    },
+                                    shape = RoundedCornerShape(4.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = azul2)
+                                ) {
+                                    Text(text = "Enviar palmada")
+                                }
+                            }
+
+                            // Mostrar la puntuación de la palmada
+                            audioScore?.let {
+                                Text(
+                                    text = "Puntuación de la palmada: $it",
+                                    color = Color.White,
+                                    modifier = Modifier.padding(top = 16.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    AnimatedVisibility(visible = showPlaybackProgress) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            LinearProgressIndicator(
+                                progress = playbackProgress,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 32.dp),
+                                color = buttonColor
+                            )
+                            Text(
+                                text = "Reproduciendo palmada...",
+                                color = Color.White,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        }
+                    }
                 }
             }
         }
-    }
+    )
 }
 
 /*
