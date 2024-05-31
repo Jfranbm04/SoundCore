@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
@@ -27,13 +29,26 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.draw.clip
 import com.example.soundcore.ui.theme.backgroundClaro
 import com.example.soundcore.ui.theme.backgroundOscuro
+import controladores.obtenerTodosLosUsuarios
+import kotlinx.coroutines.launch
+import modelos.UsuarioCard
 
 @Composable
 fun BuscarScreen(navController: NavController) {
     val textFieldValue = remember { mutableStateOf("") }
+    val usuarios = remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        coroutineScope.launch {
+            usuarios.value = obtenerTodosLosUsuarios()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -42,9 +57,9 @@ fun BuscarScreen(navController: NavController) {
                 backgroundColor = backgroundOscuro,
                 contentColor = Color.White,
                 elevation = 0.dp,
-                modifier = Modifier.height(80.dp), // altura del TopAppBar
+                modifier = Modifier.height(80.dp),
                 navigationIcon = {
-                    IconButton(onClick = {  }) {
+                    IconButton(onClick = { }) {
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = "icono buscar",
@@ -57,10 +72,9 @@ fun BuscarScreen(navController: NavController) {
                         value = textFieldValue.value,
                         onValueChange = { textFieldValue.value = it },
                         modifier = Modifier
-                            .padding(end = 8.dp) // padding desde la derecha
+                            .padding(end = 8.dp)
                             .fillMaxWidth()
-                            .height(50.dp), // Altura del TextField
-//                            .clip(RoundedCornerShape(4.dp)),
+                            .height(50.dp),
                         placeholder = { Text("Buscar") },
                         colors = TextFieldDefaults.textFieldColors(
                             backgroundColor = backgroundClaro,
@@ -68,13 +82,10 @@ fun BuscarScreen(navController: NavController) {
                             placeholderColor = Color.White.copy(alpha = 0.7f),
                             cursorColor = Color.White,
                             focusedIndicatorColor = Color.Transparent,
-
-                            ),
+                        ),
                         textStyle = TextStyle(color = Color.White, fontSize = 16.sp),
                         singleLine = true,
                         shape = RoundedCornerShape(5.dp),
-
-
                     )
                 }
             )
@@ -84,11 +95,17 @@ fun BuscarScreen(navController: NavController) {
                 modifier = Modifier
                     .fillMaxSize()
                     .background(backgroundOscuro)
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
+                    .padding(paddingValues)
             ) {
-                Text(text = "Search Screen", color = Color.White)
+                LazyColumn {
+                    items(usuarios.value) { usuario ->
+                        val nombreUsuario = usuario["nombreUsuario"] as? String ?: "Sin nombre"
+                        val fotoPerfilUrl = usuario["fotoPerfilUrl"] as? String
+                        UsuarioCard(nombreUsuario = nombreUsuario, fotoPerfilUrl = fotoPerfilUrl)
+                    }
+                }
             }
         }
     )
 }
+

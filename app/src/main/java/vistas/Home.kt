@@ -41,9 +41,12 @@ import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import com.example.soundcore.ui.theme.azul4
 import controladores.playRecording
 import controladores.startRecording
 import controladores.stopRecording
@@ -64,6 +67,7 @@ fun HomeScreen(navController: NavController) {
     var showProgress by remember { mutableStateOf(false) }
     var showPlayback by remember { mutableStateOf(false) }
     var showPlaybackProgress by remember { mutableStateOf(false) }
+    var audioScore by remember { mutableStateOf<Int?>(null) } // Estado para almacenar la puntuación
     val context = LocalContext.current
     val hasPermission = remember {
         mutableStateOf(
@@ -100,7 +104,8 @@ fun HomeScreen(navController: NavController) {
                 delay(50)
             }
             progress = 1f
-            stopRecording(context)
+            val score = stopRecording(context) // Obtener la puntuación después de detener la grabación
+            audioScore = score // Actualizar el estado con la puntuación obtenida
             isPlaying = false
             buttonColor = azul1
             showProgress = false
@@ -193,28 +198,42 @@ fun HomeScreen(navController: NavController) {
 
             AnimatedVisibility(visible = showPlayback) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Button(
-                        onClick = {
-                            isPlayingBack = true
-                            playRecording(context) {
-                                isPlayingBack = false
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = azul1)
-                    ) {
-                        Text(text = "Escucha tu palmada")
+                    Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                        Button(
+                            onClick = {
+                                isPlayingBack = true
+                                playRecording(context) {
+                                    isPlayingBack = false
+                                }
+                            },
+                            shape = RoundedCornerShape(4.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = azul1),
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        ) {
+                            Text(text = "Escucha tu palmada")
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Button(
+                            onClick = {
+                                val evaluation = evaluateRecording(context)
+                                Toast.makeText(context, "Evaluación: $evaluation", Toast.LENGTH_SHORT).show()
+                            },
+                            shape = RoundedCornerShape(4.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = azul2)
+                        ) {
+                            Text(text = "Enviar palmada")
+                        }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Button(
-                        onClick = {
-                            val evaluation = evaluateRecording(context)
-                            Toast.makeText(context, "Evaluación: $evaluation", Toast.LENGTH_SHORT).show()
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = azul1)
-                    ) {
-                        Text(text = "Evaluar palmada")
+                    // Mostrar la puntuación de la palmada
+                    audioScore?.let {
+                        Text(
+                            text = "Puntuación de la palmada: $it",
+                            color = Color.White,
+                            modifier = Modifier.padding(top = 16.dp)
+                        )
                     }
                 }
             }
@@ -239,4 +258,6 @@ fun HomeScreen(navController: NavController) {
     }
 }
 
+/*
 
+*/

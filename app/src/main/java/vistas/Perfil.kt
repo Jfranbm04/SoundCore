@@ -58,6 +58,7 @@ import com.example.soundcore.ui.theme.backgroundOscuro
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
+import controladores.descargarImagen
 import controladores.obtenerDatosUsuario
 import controladores.obtenerUrlFotoPerfil
 import kotlinx.coroutines.launch
@@ -186,17 +187,7 @@ fun PerfilScreen(navController: NavController) {
     )
 }
 
-// Función para descargar la imagen desde Firebase Storage y convertirla en un Bitmap
-suspend fun descargarImagen(url: String): Bitmap? {
-    return try {
-        val storageReference = FirebaseStorage.getInstance().getReferenceFromUrl(url)
-        val fotoPerfilBytes = storageReference.getBytes(10 * 1024 * 1024).await() // Descargar hasta 10MB
-        BitmapFactory.decodeByteArray(fotoPerfilBytes, 0, fotoPerfilBytes.size)
-    } catch (e: Exception) {
-        Log.e("PerfilScreen", "Error al descargar la imagen de perfil: $e")
-        null
-    }
-}
+
 
 
 

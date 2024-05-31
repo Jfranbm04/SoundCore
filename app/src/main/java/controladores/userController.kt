@@ -7,6 +7,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import com.google.firebase.auth.FirebaseAuth
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.Settings.Global.getString
 import androidx.navigation.NavController
@@ -86,6 +88,18 @@ private fun subirFotoPerfil(uid: String, fotoPerfil: Uri?, onSuccess: (String) -
     }
 }
 
+// Función para descargar la imagen desde Firebase Storage y convertirla en un Bitmap
+suspend fun descargarImagen(url: String): Bitmap? {
+    return try {
+        val storageReference = FirebaseStorage.getInstance().getReferenceFromUrl(url)
+        val fotoPerfilBytes = storageReference.getBytes(10 * 1024 * 1024).await() // Descargar hasta 10MB
+        BitmapFactory.decodeByteArray(fotoPerfilBytes, 0, fotoPerfilBytes.size)
+    } catch (e: Exception) {
+        Log.e("PerfilScreen", "Error al descargar la imagen de perfil: $e")
+        null
+    }
+}
+
 // Añadir usuario a Firestore
 private fun crearUsuarioFirestore(uid: String, nombreUsuario: String, email: String, fotoPerfilUrl: String) {
     val firestore = FirebaseFirestore.getInstance()
@@ -132,5 +146,17 @@ suspend fun obtenerUrlFotoPerfil(uid: String): String? {
     } catch (e: Exception) {
         Log.e("UserController", "Error al obtener la URL de la foto de perfil: $e")
         null
+    }
+}
+
+// Otener todos los usuarios desde Firestore
+suspend fun obtenerTodosLosUsuarios(): List<Map<String, Any>> {
+    val firestore = FirebaseFirestore.getInstance()
+    return try {
+        val documents = firestore.collection("usuarios").get().await()
+        documents.documents.mapNotNull { it.data }
+    } catch (e: Exception) {
+        Log.e("UserController", "Error al obtener la lista de usuarios", e)
+        emptyList()
     }
 }

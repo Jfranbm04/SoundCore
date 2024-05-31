@@ -54,7 +54,7 @@ fun startRecording(context: Context) {
     }
 }
 
-suspend fun stopRecording(context: Context) {
+suspend fun stopRecording(context: Context): Int {
     try {
         recorder.stop()
         recorder.reset()
@@ -62,14 +62,17 @@ suspend fun stopRecording(context: Context) {
         uploadAudioToFirebase(context)
 
         val maxDecibel = withContext(Dispatchers.IO) {
-            getMaxDecibel(context)
+            obtenerMaxDecibelio(context)
         }
 
         val normalizedDecibel = normalizeDecibel(maxDecibel)
         Log.d("AudioRecorderController", "Decibelio más alto (normalizado): $normalizedDecibel")
+
+        return normalizedDecibel
     } catch (e: RuntimeException) {
         Log.e("AudioRecorderController", "stop() failed")
         Toast.makeText(context, "Error al detener la grabación", Toast.LENGTH_SHORT).show()
+        return 0
     }
 }
 
@@ -153,7 +156,7 @@ fun evaluateRecording(context: Context): Int {
 }
 
 // Método que saca el decibelio máximo (sacado de internet)
-suspend fun getMaxDecibel(context: Context): Double {
+suspend fun obtenerMaxDecibelio(context: Context): Double {
     val command = "-i $outputFile -filter:a volumedetect -f null /dev/null"
 
     val deferred = CompletableDeferred<Double>()
