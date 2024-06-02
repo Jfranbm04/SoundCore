@@ -190,9 +190,3 @@ fun PerfilScreen(navController: NavController) {
         }
     )
 }
-
-
-
-
-
-
