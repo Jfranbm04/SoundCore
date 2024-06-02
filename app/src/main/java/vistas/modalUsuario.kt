@@ -56,7 +56,7 @@ fun ModalContent(nombreUsuario: String, uidRemitente: String) {
                 )
 
             ) {
-                Text(text = "Enviar solicitud de amistad")
+                Text(text = "Enviar solicitud de amistad", style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White) )
             }
 
         }
