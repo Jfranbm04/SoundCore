@@ -23,6 +23,7 @@ import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -97,6 +98,9 @@ fun PerfilScreen(navController: NavController) {
                 title = { Text("Perfil", fontSize = 20.sp, color = Color.White, fontWeight = FontWeight.Bold) },
                 backgroundColor = backgroundOscuro,
                 actions = {
+                    IconButton(onClick = { navController.navigate("solicitudes") }) {
+                        Icon(Icons.Default.MailOutline, contentDescription = "Solicitudes de amistad", tint = Color.White)
+                    }
                     IconButton(onClick = { navController.navigate("ajustes") }) {
                         Icon(Icons.Default.Settings, contentDescription = "Ajustes", tint = Color.White)
                     }
@@ -192,179 +196,3 @@ fun PerfilScreen(navController: NavController) {
 
 
 
-
-/*
-
-@Composable
-fun PerfilScreen(navController: NavController) {
-    val currentUser = FirebaseAuth.getInstance().currentUser
-    var userData by remember { mutableStateOf<Map<String, Any>?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
-    val coroutineScope = rememberCoroutineScope()
-    var fotoPerfilBitmap by remember { mutableStateOf<Bitmap?>(null) }
-
-    LaunchedEffect(currentUser?.uid) {
-        currentUser?.uid?.let { uid ->
-            coroutineScope.launch {
-                userData = obtenerDatosUsuario(uid)
-                val fotoPerfilUrl = obtenerUrlFotoPerfil(uid)
-                fotoPerfilUrl?.let {
-                    // Descargar la imagen de Firebase Storage
-                    fotoPerfilBitmap = descargarImagen(it)
-                }
-                isLoading = false
-            }
-        } ?: run {
-            isLoading = false
-        }
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Perfil", fontSize = 20.sp, color = Color.White, fontWeight = FontWeight.Bold) },
-                backgroundColor = backgroundOscuro,
-                actions = {
-                    IconButton(onClick = { navController.navigate("ajustes") }) {
-                        Icon(Icons.Default.Settings, contentDescription = "Ajustes", tint = Color.White)
-                    }
-                }
-            )
-        },
-        content = { paddingValues ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .background(backgroundOscuro),
-                contentAlignment = Alignment.TopStart,
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.padding(8.dp))
-                } else {
-                    userData?.let { data ->
-                        Column(horizontalAlignment = Alignment.Start, modifier = Modifier.padding(8.dp)) {
-                            Row(verticalAlignment = Alignment.Top) {
-                                fotoPerfilBitmap?.let { bitmap ->
-                                    // Mostrar la imagen de la foto de perfil
-                                    Image(
-                                        bitmap = bitmap.asImageBitmap(),
-                                        contentDescription = "Foto de perfil",
-                                        modifier = Modifier
-                                            .size(80.dp)
-                                            .clip(CircleShape)
-                                            .border(2.dp, Color.White, CircleShape),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                } ?: run {
-                                    // Mostrar un círculo azul claro en lugar de la foto de perfil si no está disponible
-                                    Image(
-                                        painter = painterResource(id = R.drawable.google_logo),
-                                        contentDescription = "Foto de perfil",
-                                        modifier = Modifier.size(80.dp)
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.width(8.dp))
-
-                                // Nombre y correo electrónico del usuario
-                                Column {
-                                    Text(
-                                        text = "${data["nombreUsuario"] ?: "Nombre no disponible"}",
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 20.sp
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(text = "${data["email"] ?: "Correo no disponible"}", color = Color.Gray)
-                                }
-                            }
-                        }
-                    } ?: run {
-                        Text(text = "Error al cargar datos del usuario", color = Color.White)
-                    }
-                }
-            }
-        }
-    )
-}
-
-// Función para descargar la imagen desde Firebase Storage y convertirla en un Bitmap
-suspend fun descargarImagen(url: String): Bitmap? {
-    return try {
-        val storageReference = FirebaseStorage.getInstance().getReferenceFromUrl(url)
-        val fotoPerfilBytes = storageReference.getBytes(10 * 1024 * 1024).await() // Descargar hasta 10MB
-        BitmapFactory.decodeByteArray(fotoPerfilBytes, 0, fotoPerfilBytes.size)
-    } catch (e: Exception) {
-        Log.e("PerfilScreen", "Error al descargar la imagen de perfil: $e")
-        null
-    }
-}
-
-
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//@Composable
-//fun PerfilScreen(navController: NavController) {
-//    val currentUser = FirebaseAuth.getInstance().currentUser
-//
-//    Scaffold(
-//        topBar = {
-//            TopAppBar(
-//                title = { Text("Perfil", fontSize = 20.sp, color= Color.White, fontWeight = FontWeight.Bold) },
-//                backgroundColor = backgroundOscuro,
-//                actions = {
-//                    IconButton(onClick = { navController.navigate("ajustes") }) {
-//                        Icon(Icons.Default.Settings, contentDescription = "Ajustes", tint = Color.White)
-//                    }
-//                }
-//            )
-//        },
-//        content = { paddingValues ->
-//            Box(
-//                modifier = Modifier
-//                    .fillMaxSize()
-//                    .padding(paddingValues)
-//                    .background(backgroundOscuro),
-//                contentAlignment = Alignment.Center,
-//            ) {
-//                currentUser?.let { user ->
-//                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-//                        // Muestra el nombre del usuario
-//                        Text(text = "Nombre: ${user.displayName ?: "No disponible"}", color = Color.White)
-//                        Spacer(modifier = Modifier.height(8.dp))
-//
-//                        // Muestra el correo electrónico del usuario
-//                        Text(text = "Correo electrónico: ${user.email ?: "No disponible"}", color = Color.White)
-//                        Spacer(modifier = Modifier.height(8.dp))
-//
-//                        // Muestra la foto de perfil del usuario si está disponible
-////                        user.photoUrl?.let { photoUrl ->
-////                            Image(
-////                                painter = rememberImagePainter(photoUrl),
-////                                contentDescription = "Foto de perfil",
-////                                modifier = Modifier.size(100.dp).clip(CircleShape)
-////                            )
-////                            Spacer(modifier = Modifier.height(8.dp))
-////                        }
-//                    }
-//                }
-//            }
-//        }
-//    )
-//}

@@ -10,4 +10,5 @@ sealed class Paths (val path: String){
     object Profile : Paths("perfil")
     object Ajustes : Paths("ajustes")
     object EditarPerfil : Paths("editarPerfil")
+    object Solicitudes : Paths("solicitudes")
 }

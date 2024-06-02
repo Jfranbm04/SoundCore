@@ -3,6 +3,7 @@ package modelos
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,7 +29,7 @@ import com.example.soundcore.ui.theme.backgroundOscuro
 import controladores.descargarImagen
 
 @Composable
-fun UsuarioCard(nombreUsuario: String, fotoPerfilUrl: String?) {
+fun UsuarioCard(nombreUsuario: String, fotoPerfilUrl: String?, onClick: () -> Unit) {
     val bitmapState = produceState<Bitmap?>(initialValue = null, fotoPerfilUrl) {
         value = fotoPerfilUrl?.let { descargarImagen(it) }
     }
@@ -38,8 +39,14 @@ fun UsuarioCard(nombreUsuario: String, fotoPerfilUrl: String?) {
             .fillMaxWidth()
             .padding(8.dp)
             .background(Color.Transparent)
+            .clickable(onClick = onClick) // Añadir clickable
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(backgroundOscuro).fillMaxWidth()) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .background(backgroundOscuro)
+                .fillMaxWidth()
+        ) {
             if (bitmapState.value != null) {
                 Image(
                     bitmap = bitmapState.value!!.asImageBitmap(),
@@ -47,7 +54,6 @@ fun UsuarioCard(nombreUsuario: String, fotoPerfilUrl: String?) {
                     modifier = Modifier
                         .size(64.dp)
                         .clip(CircleShape)
-
                 )
             } else {
                 Icon(
@@ -59,7 +65,7 @@ fun UsuarioCard(nombreUsuario: String, fotoPerfilUrl: String?) {
                 )
             }
             Spacer(modifier = Modifier.width(16.dp))
-            Text(text = nombreUsuario, color = Color.White )
+            Text(text = nombreUsuario, color = Color.White)
         }
     }
 }

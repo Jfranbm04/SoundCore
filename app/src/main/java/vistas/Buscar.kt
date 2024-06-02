@@ -10,8 +10,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
+import androidx.compose.material.ModalBottomSheetLayout
+import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
@@ -29,20 +32,27 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.draw.clip
 import com.example.soundcore.ui.theme.backgroundClaro
 import com.example.soundcore.ui.theme.backgroundOscuro
+import com.google.firebase.auth.FirebaseAuth
 import controladores.obtenerTodosLosUsuarios
 import kotlinx.coroutines.launch
 import modelos.UsuarioCard
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun BuscarScreen(navController: NavController) {
     val textFieldValue = remember { mutableStateOf("") }
     val usuarios = remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
     val coroutineScope = rememberCoroutineScope()
+    val auth = FirebaseAuth.getInstance()
+
+    val modalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
+    val selectedUsuario = remember { mutableStateOf<Map<String, Any>?>(null) }
 
     LaunchedEffect(Unit) {
         coroutineScope.launch {
@@ -50,62 +60,84 @@ fun BuscarScreen(navController: NavController) {
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { },
-                backgroundColor = backgroundOscuro,
-                contentColor = Color.White,
-                elevation = 0.dp,
-                modifier = Modifier.height(80.dp),
-                navigationIcon = {
-                    IconButton(onClick = { }) {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "icono buscar",
-                            tint = Color.White
+    val uidRemitente = auth.currentUser?.uid ?: ""
+
+    ModalBottomSheetLayout(
+        sheetState = modalBottomSheetState,
+        sheetContent = {
+            selectedUsuario.value?.let { usuario ->
+                val nombreUsuario = usuario["nombreUsuario"] as? String ?: "Sin nombre"
+                ModalContent(nombreUsuario, uidRemitente)
+            }
+        }
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { },
+                    backgroundColor = backgroundOscuro,
+                    contentColor = Color.White,
+                    elevation = 0.dp,
+                    modifier = Modifier.height(80.dp),
+                    navigationIcon = {
+                        IconButton(onClick = { }) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "icono buscar",
+                                tint = Color.White
+                            )
+                        }
+                    },
+                    actions = {
+                        TextField(
+                            value = textFieldValue.value,
+                            onValueChange = { textFieldValue.value = it },
+                            modifier = Modifier
+                                .padding(end = 8.dp)
+                                .fillMaxWidth()
+                                .height(50.dp),
+                            placeholder = { Text("Buscar") },
+                            colors = TextFieldDefaults.textFieldColors(
+                                backgroundColor = backgroundClaro,
+                                textColor = Color.White,
+                                placeholderColor = Color.White.copy(alpha = 0.7f),
+                                cursorColor = Color.White,
+                                focusedIndicatorColor = Color.Transparent,
+                            ),
+                            textStyle = TextStyle(color = Color.White, fontSize = 16.sp),
+                            singleLine = true,
+                            shape = RoundedCornerShape(5.dp),
                         )
                     }
-                },
-                actions = {
-                    TextField(
-                        value = textFieldValue.value,
-                        onValueChange = { textFieldValue.value = it },
-                        modifier = Modifier
-                            .padding(end = 8.dp)
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        placeholder = { Text("Buscar") },
-                        colors = TextFieldDefaults.textFieldColors(
-                            backgroundColor = backgroundClaro,
-                            textColor = Color.White,
-                            placeholderColor = Color.White.copy(alpha = 0.7f),
-                            cursorColor = Color.White,
-                            focusedIndicatorColor = Color.Transparent,
-                        ),
-                        textStyle = TextStyle(color = Color.White, fontSize = 16.sp),
-                        singleLine = true,
-                        shape = RoundedCornerShape(5.dp),
-                    )
-                }
-            )
-        },
-        content = { paddingValues ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(backgroundOscuro)
-                    .padding(paddingValues)
-            ) {
-                LazyColumn {
-                    items(usuarios.value) { usuario ->
-                        val nombreUsuario = usuario["nombreUsuario"] as? String ?: "Sin nombre"
-                        val fotoPerfilUrl = usuario["fotoPerfilUrl"] as? String
-                        UsuarioCard(nombreUsuario = nombreUsuario, fotoPerfilUrl = fotoPerfilUrl)
+                )
+            },
+            content = { paddingValues ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(backgroundOscuro)
+                        .padding(paddingValues)
+                ) {
+                    LazyColumn {
+                        items(usuarios.value) { usuario ->
+                            val nombreUsuario = usuario["nombreUsuario"] as? String ?: "Sin nombre"
+                            val fotoPerfilUrl = usuario["fotoPerfilUrl"] as? String
+                            UsuarioCard(
+                                nombreUsuario = nombreUsuario,
+                                fotoPerfilUrl = fotoPerfilUrl,
+                                onClick = {
+                                    selectedUsuario.value = usuario
+                                    coroutineScope.launch {
+                                        modalBottomSheetState.show()
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             }
-        }
-    )
+        )
+    }
 }
+
 

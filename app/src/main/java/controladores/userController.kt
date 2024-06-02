@@ -14,6 +14,7 @@ import android.provider.Settings.Global.getString
 import androidx.navigation.NavController
 import com.example.soundcore.R
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
@@ -108,7 +109,8 @@ private fun crearUsuarioFirestore(uid: String, nombreUsuario: String, email: Str
     val userData = hashMapOf(
         "nombreUsuario" to nombreUsuario,
         "email" to email,
-        "fotoPerfilUrl" to fotoPerfilUrl
+        "fotoPerfilUrl" to fotoPerfilUrl,
+        "listaAmigos" to emptyList<String>()
     )
 
     docRef.set(userData)
@@ -119,7 +121,6 @@ private fun crearUsuarioFirestore(uid: String, nombreUsuario: String, email: Str
             Log.w(TAG, "Error al crear usuario en Firestore", e)
         }
 }
-
 
 // Sacar datos usuario firestore
 suspend fun obtenerDatosUsuario(uid: String): Map<String, Any>? {
@@ -149,7 +150,7 @@ suspend fun obtenerUrlFotoPerfil(uid: String): String? {
     }
 }
 
-// Otener todos los usuarios desde Firestore
+// Obtener todos los usuarios desde Firestore
 suspend fun obtenerTodosLosUsuarios(): List<Map<String, Any>> {
     val firestore = FirebaseFirestore.getInstance()
     return try {
@@ -160,3 +161,134 @@ suspend fun obtenerTodosLosUsuarios(): List<Map<String, Any>> {
         emptyList()
     }
 }
+
+// Función para enviar solicitud de amistad
+fun enviarSolicitudDeAmistad(uidRemitente: String, nombreUsuarioDestinatario: String) {
+    val firestore = FirebaseFirestore.getInstance()
+
+    // Buscar el UID del usuario destinatario por su nombre de usuario
+    firestore.collection("usuarios")
+        .whereEqualTo("nombreUsuario", nombreUsuarioDestinatario)
+        .get()
+        .addOnSuccessListener { documents ->
+            if (!documents.isEmpty) {
+                val uidDestinatario = documents.documents[0].id
+
+                // Crear una nueva solicitud de amistad
+                val solicitudData = hashMapOf(
+                    "uidRemitente" to uidRemitente,
+                    "uidDestinatario" to uidDestinatario
+                )
+
+                firestore.collection("solicitudes").add(solicitudData)
+                    .addOnSuccessListener {
+                        Log.d(TAG, "Solicitud de amistad enviada")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e(TAG, "Error al enviar la solicitud de amistad", e)
+                    }
+            } else {
+                Log.d(TAG, "No se encontró un usuario con ese nombre de usuario")
+            }
+        }
+        .addOnFailureListener { e ->
+            Log.e(TAG, "Error al buscar el usuario destinatario", e)
+        }
+}
+
+
+// Obtener las solicitudes de amistad del usuario actual
+suspend fun obtenerSolicitudesDeAmistad(uidDestinatario: String): List<Map<String, Any>> {
+    val firestore = FirebaseFirestore.getInstance()
+    return try {
+        val documents = firestore.collection("solicitudes")
+            .whereEqualTo("uidDestinatario", uidDestinatario)
+            .get().await()
+        documents.documents.mapNotNull { it.data }
+    } catch (e: Exception) {
+        Log.e("UserController", "Error al obtener las solicitudes de amistad", e)
+        emptyList()
+    }
+}
+
+
+// Función para aceptar solicitud de amistad
+fun aceptarSolicitudDeAmistad(uidRemitente: String, uidDestinatario: String) {
+    val firestore = FirebaseFirestore.getInstance()
+
+    // Añadir el UID del destinatario a la lista de amigos del remitente
+    val remitenteRef = firestore.collection("usuarios").document(uidRemitente)
+    remitenteRef.update("listaAmigos", FieldValue.arrayUnion(uidDestinatario))
+        .addOnSuccessListener {
+            Log.d(TAG, "Amigo añadido a la lista del remitente")
+        }
+        .addOnFailureListener { e ->
+            Log.e(TAG, "Error al añadir amigo a la lista del remitente", e)
+        }
+
+    // Añadir el UID del remitente a la lista de amigos del destinatario
+    val destinatarioRef = firestore.collection("usuarios").document(uidDestinatario)
+    destinatarioRef.update("listaAmigos", FieldValue.arrayUnion(uidRemitente))
+        .addOnSuccessListener {
+            Log.d(TAG, "Amigo añadido a la lista del destinatario")
+        }
+        .addOnFailureListener { e ->
+            Log.e(TAG, "Error al añadir amigo a la lista del destinatario", e)
+        }
+
+    // Eliminar la solicitud de amistad
+    firestore.collection("solicitudes")
+        .whereEqualTo("uidRemitente", uidRemitente)
+        .whereEqualTo("uidDestinatario", uidDestinatario)
+        .get()
+        .addOnSuccessListener { documents ->
+            for (document in documents) {
+                firestore.collection("solicitudes").document(document.id).delete()
+                    .addOnSuccessListener {
+                        Log.d(TAG, "Solicitud de amistad eliminada")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e(TAG, "Error al eliminar la solicitud de amistad", e)
+                    }
+            }
+        }
+        .addOnFailureListener { e ->
+            Log.e(TAG, "Error al buscar la solicitud de amistad", e)
+        }
+}
+
+// Función para rechazar solicitud de amistad
+fun rechazarSolicitudDeAmistad(uidRemitente: String, uidDestinatario: String) {
+    val firestore = FirebaseFirestore.getInstance()
+    firestore.collection("solicitudes")
+        .whereEqualTo("uidRemitente", uidRemitente)
+        .whereEqualTo("uidDestinatario", uidDestinatario)
+        .get()
+        .addOnSuccessListener { documents ->
+            for (document in documents) {
+                firestore.collection("solicitudes").document(document.id).delete()
+                    .addOnSuccessListener {
+                        Log.d(TAG, "Solicitud de amistad rechazada")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e(TAG, "Error al rechazar la solicitud de amistad", e)
+                    }
+            }
+        }
+        .addOnFailureListener { e ->
+            Log.e(TAG, "Error al buscar la solicitud de amistad", e)
+        }
+}
+
+// Obtener el nombre del usuario por UID
+suspend fun obtenerNombreUsuario(uid: String): String? {
+    val firestore = FirebaseFirestore.getInstance()
+    return try {
+        val document = firestore.collection("usuarios").document(uid).get().await()
+        document.getString("nombreUsuario")
+    } catch (e: Exception) {
+        Log.e("UserController", "Error al obtener el nombre del usuario", e)
+        null
+    }
+}
+

@@ -49,7 +49,7 @@ import kotlinx.coroutines.tasks.await
 import modelos.Paths
 
 @Composable
-fun editarPerfilScreen(navController: NavController) {
+fun EditarPerfilScreen(navController: NavController) {
     // Estado para almacenar el nombre del usuario y la URL de la foto de perfil
     var nombreUsuario by remember { mutableStateOf("") }
     var fotoPerfilUrl by remember { mutableStateOf("") }
