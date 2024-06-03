@@ -34,7 +34,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
 import com.example.soundcore.ui.theme.backgroundClaro
 import com.example.soundcore.ui.theme.backgroundOscuro
@@ -48,15 +50,30 @@ import modelos.UsuarioCard
 fun BuscarScreen(navController: NavController) {
     val textFieldValue = remember { mutableStateOf("") }
     val usuarios = remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
+    val usuariosFiltrados = remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
     val coroutineScope = rememberCoroutineScope()
     val auth = FirebaseAuth.getInstance()
 
     val modalBottomSheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
     val selectedUsuario = remember { mutableStateOf<Map<String, Any>?>(null) }
+    var solicitudEnviada by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         coroutineScope.launch {
             usuarios.value = obtenerTodosLosUsuarios()
+            usuariosFiltrados.value = usuarios.value
+        }
+    }
+
+    // fiLTRA
+    LaunchedEffect(textFieldValue.value) {
+        usuariosFiltrados.value = if (textFieldValue.value.isEmpty()) {
+            usuarios.value
+        } else {
+            usuarios.value.filter {
+                val nombreUsuario = it["nombreUsuario"] as? String ?: ""
+                nombreUsuario.contains(textFieldValue.value, ignoreCase = true)
+            }
         }
     }
 
@@ -67,10 +84,17 @@ fun BuscarScreen(navController: NavController) {
         sheetContent = {
             selectedUsuario.value?.let { usuario ->
                 val nombreUsuario = usuario["nombreUsuario"] as? String ?: "Sin nombre"
-                ModalContent(nombreUsuario, uidRemitente)
+                ModalContent(nombreUsuario, uidRemitente, solicitudEnviada, { solicitudEnviada = it })
             }
         }
     ) {
+        // Al cerrar el modal se restaura el botón Enviar Solicitud
+        LaunchedEffect(modalBottomSheetState.currentValue) {
+            if (modalBottomSheetState.currentValue == ModalBottomSheetValue.Hidden) {
+                solicitudEnviada = false
+            }
+        }
+
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -119,7 +143,7 @@ fun BuscarScreen(navController: NavController) {
                         .padding(paddingValues)
                 ) {
                     LazyColumn {
-                        items(usuarios.value) { usuario ->
+                        items(usuariosFiltrados.value) { usuario ->
                             val nombreUsuario = usuario["nombreUsuario"] as? String ?: "Sin nombre"
                             val fotoPerfilUrl = usuario["fotoPerfilUrl"] as? String
                             UsuarioCard(
@@ -139,5 +163,3 @@ fun BuscarScreen(navController: NavController) {
         )
     }
 }
-
-

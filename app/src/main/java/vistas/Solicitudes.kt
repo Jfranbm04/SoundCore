@@ -74,11 +74,15 @@ fun SolicitudesScreen(navController: NavController) {
                         // Obtener el nombre del remitente
                         var nombreUsuario by remember { mutableStateOf("Cargando...") }
                         LaunchedEffect(uidRemitente) {
-                            nombreUsuario = obtenerNombreUsuario(uidRemitente) ?: "Sin nombre"
+                            nombreUsuario = obtenerNombreUsuario(uidRemitente) ?: "Nombre no disponible"
                         }
 
                         // Mostrar la solicitud de amistad
-                        SolicitudCard(navController, nombreUsuario, uidRemitente)
+                        SolicitudCard(navController, nombreUsuario, uidRemitente) {
+                            coroutineScope.launch {
+                                solicitudes.value = solicitudes.value.filter { it["uidRemitente"] != uidRemitente }
+                            }
+                        }
                     }
                 }
             }
