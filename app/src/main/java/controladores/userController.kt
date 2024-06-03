@@ -22,7 +22,6 @@ import modelos.Paths
 
 private lateinit var auth: FirebaseAuth
 
-
 // Función login
 fun comprobarLogin(navController: NavController, contexto: Context, email: String, password: String){
     auth = FirebaseAuth.getInstance()

@@ -55,6 +55,7 @@ import androidx.core.content.ContextCompat
 import com.example.soundcore.R
 import com.example.soundcore.ui.theme.azul4
 import com.example.soundcore.ui.theme.backgroundOscuro
+import controladores.enviarPalmada
 import controladores.playRecording
 import controladores.startRecording
 import controladores.stopRecording
@@ -62,8 +63,17 @@ import controladores.evaluateRecording
 
 
 
-// Utilizo MediaCodec y TarsosDSP para el trato de audio
+// Utilizo MediaCodec y TarsosDSP para el trato de audio / FFmpegKit
 
+/*
+Cuando se pulse el botón enviar palmada, vamos a añadir:
+- un registro en la tabla Palmadas con los campos UIDUsuario, nombreAudio (es el nombre del campo del tipo audiorecord_1717453296829.3gP que se almacena en firebase storage en la carpeta audios), puntuación.
+ - un registro en la listaPalmadas con el UID de la palmada, sacada de la tabla Palmadas
+*/
+
+// JFDA: Me da problemas a la hora de enviar la puntuación a Palmadas, ya que me envía "1" (mirar linea 257).
+// JFDA: También me da problemas al sacar el nombre del fichero con System.currentTimeMillis, ya que no es el mismo tiempo cuando se crea el audio que cuando se envía.
+// JFDA: Revisar Buscar.kt que aparezca la misma persona que está usando la app, modal "Enviar solicitud" / "Ya sois amigos, ver perfil", pantalla editarPerfil.kt
 
 @Composable
 fun HomeScreen(navController: NavController) {
@@ -93,6 +103,11 @@ fun HomeScreen(navController: NavController) {
         hasPermission.value = isGranted
     }
 
+
+
+
+
+
     // Check for permission
     LaunchedEffect(Unit) {
         if (!hasPermission.value) {
@@ -107,8 +122,8 @@ fun HomeScreen(navController: NavController) {
             startRecording(context)
 
             val startTime = System.currentTimeMillis()
-            while (System.currentTimeMillis() - startTime < 5000) {
-                progress = (System.currentTimeMillis() - startTime) / 5000f
+            while (System.currentTimeMillis() - startTime < 3000) {
+                progress = (System.currentTimeMillis() - startTime) / 3000f
                 delay(50)
             }
             progress = 1f
@@ -126,8 +141,8 @@ fun HomeScreen(navController: NavController) {
         if (isPlayingBack) {
             showPlaybackProgress = true
             val startTime = System.currentTimeMillis()
-            while (System.currentTimeMillis() - startTime < 5000) {
-                playbackProgress = (System.currentTimeMillis() - startTime) / 5000f
+            while (System.currentTimeMillis() - startTime < 3000) {
+                playbackProgress = (System.currentTimeMillis() - startTime) / 3000f
                 delay(50)
             }
             playbackProgress = 1f
@@ -245,10 +260,23 @@ fun HomeScreen(navController: NavController) {
 
                                 Spacer(modifier = Modifier.height(16.dp))
 
+//                                Button(
+//                                    onClick = {
+//                                        audioScore?.let { score ->
+//                                            enviarPalmada(context, score)
+//                                            Toast.makeText(context, "Palmada Enviada", Toast.LENGTH_SHORT).show()
+//                                        }
+//                                    },
+//                                    shape = RoundedCornerShape(4.dp),
+//                                    colors = ButtonDefaults.buttonColors(containerColor = azul2)
+//                                ) {
+//                                    Text(text = "Enviar palmada")
+//                                }
                                 Button(
                                     onClick = {
                                         val evaluation = evaluateRecording(context)
-                                        Toast.makeText(context, "Evaluación: $evaluation", Toast.LENGTH_SHORT).show()
+                                        val nombreAudio = "audiorecord_" + System.currentTimeMillis() + ".3gp"
+                                        enviarPalmada(context, evaluation, nombreAudio)
                                     },
                                     shape = RoundedCornerShape(4.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = azul2)
@@ -265,6 +293,7 @@ fun HomeScreen(navController: NavController) {
                                     modifier = Modifier.padding(top = 16.dp)
                                 )
                             }
+
                         }
                     }
 
@@ -289,7 +318,3 @@ fun HomeScreen(navController: NavController) {
         }
     )
 }
-
-/*
-
-*/

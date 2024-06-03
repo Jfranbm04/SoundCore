@@ -18,10 +18,24 @@ import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.ReturnCode
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+
+
+/*
+Cuando se pulse el botón enviar palmada, vamos a añadir:
+- un registro en la tabla Palmadas con los campos UIDUsuario, nombreAudio (es el nombre del campo del tipo audiorecord_1717453296829.3gP que se almacena en firebase storage en la carpeta audios), puntuación.
+ - un registro en la listaPalmadas con el UID de la palmada, sacada de la tabla Palmadas
+*/
+
+
+
+
 
 // Variables globales para almacenar el archivo de salida y el nombre del archivo.
 
@@ -128,7 +142,7 @@ fun evaluateRecording(context: Context): Int {
     try {
         mediaPlayer.setDataSource(audioFile.path)
         mediaPlayer.prepare()
-        mediaPlayer.start()
+
 
         val timer = object : CountDownTimer(mediaPlayer.duration.toLong(), 100) {
             override fun onTick(millisUntilFinished: Long) {
@@ -194,4 +208,52 @@ fun normalizeDecibel(decibel: Double): Int {
     val normalized = ((decibel - minDb) * (100 - 1) / range) + 1
 
     return normalized.toInt().coerceIn(1, 100)
+}
+
+
+fun enviarPalmada(context: Context, puntuacion: Int, nombreAudio: String) {
+    val auth = FirebaseAuth.getInstance()
+    val firestore = FirebaseFirestore.getInstance()
+    val user = auth.currentUser
+
+    if (user != null) {
+        val uidUsuario = user.uid
+
+        uploadAudioToFirebase(context) // Subir audio a firebase Storage
+
+        // Crear un nuevo documento en la colección "Palmadas"
+        val palmadasDocRef = firestore.collection("Palmadas").document()
+        val uidPalmada = palmadasDocRef.id
+
+        // Crear un objeto con los datos de la palmada
+        val palmadaData = hashMapOf(
+            "UIDUsuario" to uidUsuario,
+            "nombreAudio" to nombreAudio,
+            "puntuacion" to puntuacion
+        )
+
+        // Añadir el objeto a la colección "Palmadas"
+        palmadasDocRef.set(palmadaData)
+            .addOnSuccessListener {
+                Log.d("Firestore", "Puntuación añadida a la colección Palmadas")
+
+                // Añadir el UID de la palmada a la listaPalmadas del usuario
+                val userDocRef = firestore.collection("usuarios").document(uidUsuario)
+                userDocRef.update("listaPalmadas", FieldValue.arrayUnion(uidPalmada))
+                    .addOnSuccessListener {
+                        Log.d("Firestore", "UID de la palmada añadida a listaPalmadas del usuario")
+                        Toast.makeText(context, "Palmada Enviada", Toast.LENGTH_SHORT).show()
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("Firestore", "Error al añadir UID de la palmada a listaPalmadas del usuario", e)
+                        Toast.makeText(context, "Error al enviar la palmada", Toast.LENGTH_SHORT).show()
+                    }
+            }
+            .addOnFailureListener { e ->
+                Log.e("Firestore", "Error al añadir la puntuación a la colección Palmadas", e)
+                Toast.makeText(context, "Error al enviar la palmada", Toast.LENGTH_SHORT).show()
+            }
+    } else {
+        Toast.makeText(context, "Usuario no autenticado", Toast.LENGTH_SHORT).show()
+    }
 }
