@@ -59,14 +59,18 @@ fun BuscarScreen(navController: NavController) {
     val selectedUsuario = remember { mutableStateOf<Map<String, Any>?>(null) }
     var solicitudEnviada by remember { mutableStateOf(false) }
 
+    val uidRemitente = auth.currentUser?.uid ?: ""
+
     LaunchedEffect(Unit) {
         coroutineScope.launch {
-            usuarios.value = obtenerTodosLosUsuarios()
+            usuarios.value = obtenerTodosLosUsuarios().filter {
+                it["uid"] != uidRemitente
+            }
             usuariosFiltrados.value = usuarios.value
         }
     }
 
-    // fiLTRA
+    // Filtra con el buscador
     LaunchedEffect(textFieldValue.value) {
         usuariosFiltrados.value = if (textFieldValue.value.isEmpty()) {
             usuarios.value
@@ -77,8 +81,6 @@ fun BuscarScreen(navController: NavController) {
             }
         }
     }
-
-    val uidRemitente = auth.currentUser?.uid ?: ""
 
     ModalBottomSheetLayout(
         sheetState = modalBottomSheetState,

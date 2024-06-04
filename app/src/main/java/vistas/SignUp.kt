@@ -62,7 +62,7 @@ fun HeaderSignUp(modifier: Modifier, navController: NavController) {
 @Composable
 fun headerRegistro() {
     Text(
-        text = "REGÍSTRATE \n EN SOUNDCORE",
+        text = "ÚNETE A LA ÉLITE",
         modifier = Modifier.fillMaxWidth(),
         fontSize = 30.sp,
         textAlign = TextAlign.Center,
@@ -222,7 +222,7 @@ fun camposRegistro(navController: NavController) {
                 colors = TextFieldDefaults.textFieldColors(
                     containerColor = azul4,
                     focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
+                    unfocusedIndicatorColor = Color.Transparent,
                 ),
                 visualTransformation = if (showPassword) {
                     VisualTransformation.None

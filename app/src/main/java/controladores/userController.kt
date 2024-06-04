@@ -153,12 +153,15 @@ suspend fun obtenerTodosLosUsuarios(): List<Map<String, Any>> {
     val firestore = FirebaseFirestore.getInstance()
     return try {
         val documents = firestore.collection("usuarios").get().await()
-        documents.documents.mapNotNull { it.data }
+        documents.documents.mapNotNull {
+            it.data?.plus("uid" to it.id) // UID del usuario actual
+        }
     } catch (e: Exception) {
         Log.e("UserController", "Error al obtener la lista de usuarios", e)
         emptyList()
     }
 }
+
 
 // Función para enviar solicitud de amistad
 fun enviarSolicitudDeAmistad(uidRemitente: String, nombreUsuarioDestinatario: String) {

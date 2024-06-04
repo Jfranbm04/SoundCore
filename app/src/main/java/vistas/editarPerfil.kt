@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -103,86 +104,105 @@ fun EditarPerfilScreen(navController: NavController) {
         newFotoPerfilUri = uri
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
-    ) {
-        Spacer(modifier = Modifier.height(20.dp))
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Editar Perfil", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Volver",
+                            tint = Color.White
+                        )
+                    }
+                },
+                backgroundColor = backgroundOscuro,
+                contentColor = backgroundOscuro
+            )
+        },
+        content = { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .background(backgroundOscuro),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Top
+            ) {
+                Spacer(modifier = Modifier.height(20.dp))
 
-        // Imagen de perfil
-        Box(
-            modifier = Modifier
-                .size(120.dp)
-                .clip(CircleShape)
-                .background(Color.Gray)
-                .clickable { launcher.launch("image/*") }
-        ) {
-            newFotoPerfilUri?.let {
-                val inputStream = context.contentResolver.openInputStream(it)
-                val bitmap = BitmapFactory.decodeStream(inputStream)
-                fotoPerfilBitmap = bitmap
-            }
-            fotoPerfilBitmap?.let {
-                Image(
-                    bitmap = it.asImageBitmap(),
-                    contentDescription = "Foto de perfil",
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Campo de texto para el nombre de usuario
-        TextField(
-            value = nombreUsuario,
-            onValueChange = { nombreUsuario = it },
-            modifier = Modifier.fillMaxWidth().background(azul4),
-
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Botón de guardar
-        androidx.compose.material3.Button( // Me da problemas con algunas propiedades y he tenido que importar el botón manualmente
-            onClick = {
-                if (uid != null) {
-                    coroutineScope.launch {
-                        val userRef = db.collection("usuarios").document(uid)
-                        val updateData = mutableMapOf<String, Any>()
-                        updateData["nombreUsuario"] = nombreUsuario.text
-
-                        newFotoPerfilUri?.let { uri ->
-                            subirFotoPerfil(uid, uri) { url ->
-                                updateData["fotoPerfilUrl"] = url
-                                userRef.update(updateData).addOnSuccessListener {
-                                    navController.popBackStack()
-                                }
-                            }
-                        } ?: run {
-                            userRef.update(updateData).addOnSuccessListener {
-                                navController.popBackStack()
-                            }
-                        }
+                // Imagen de perfil
+                Box(
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(CircleShape)
+                        .background(Color.Gray)
+                        .clickable { launcher.launch("image/*") }
+                ) {
+                    newFotoPerfilUri?.let {
+                        val inputStream = context.contentResolver.openInputStream(it)
+                        val bitmap = BitmapFactory.decodeStream(inputStream)
+                        fotoPerfilBitmap = bitmap
+                    }
+                    fotoPerfilBitmap?.let {
+                        Image(
+                            bitmap = it.asImageBitmap(),
+                            contentDescription = "Foto de perfil",
+                            modifier = Modifier.fillMaxSize()
+                        )
                     }
                 }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            shape = RoundedCornerShape(4.dp),
-            colors = androidx.compose.material3.ButtonDefaults.buttonColors( // El error en concreto
-                containerColor = azul1
-            )
-        ) {
-            Text("Guardar cambios")
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Campo de texto para el nombre de usuario
+                TextField(
+                    value = nombreUsuario,
+                    onValueChange = { nombreUsuario = it },
+                    textStyle = TextStyle(fontSize = 16.sp),
+                    modifier = Modifier
+                        .fillMaxWidth().padding(16.dp)
+                        .background(azul4)
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Botón de guardar
+                androidx.compose.material3.Button(
+                    onClick = {
+                        if (uid != null) {
+                            coroutineScope.launch {
+                                val userRef = db.collection("usuarios").document(uid)
+                                val updateData = mutableMapOf<String, Any>()
+                                updateData["nombreUsuario"] = nombreUsuario.text
+
+                                newFotoPerfilUri?.let { uri ->
+                                    subirFotoPerfil(uid, uri) { url ->
+                                        updateData["fotoPerfilUrl"] = url
+                                        userRef.update(updateData).addOnSuccessListener {
+                                            navController.popBackStack()
+                                        }
+                                    }
+                                } ?: run {
+                                    userRef.update(updateData).addOnSuccessListener {
+                                        navController.popBackStack()
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    shape = RoundedCornerShape(4.dp),
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = azul1
+                    )
+                ) {
+                    Text("Guardar cambios")
+                }
+            }
         }
-
-
-
-
-    }
+    )
 }
