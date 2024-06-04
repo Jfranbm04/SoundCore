@@ -10,6 +10,7 @@ import vistas.AjustesScreen
 import vistas.BuscarScreen
 import vistas.EditarPerfilScreen
 import vistas.HomeScreen
+import vistas.ListaAmigosScreen
 import vistas.LoginScreen
 import vistas.MainScreen
 import vistas.PerfilScreen
@@ -43,6 +44,7 @@ fun AppNavigation(){
         composable(route = Paths.Ajustes.path) { AjustesScreen(navController) }
         composable(route = Paths.EditarPerfil.path) { EditarPerfilScreen(navController) }
         composable(route = Paths.Solicitudes.path) { SolicitudesScreen(navController) }
+        composable(route = Paths.ListaAmigos.path) { ListaAmigosScreen(navController) }
     }
 }
 

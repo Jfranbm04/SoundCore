@@ -38,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
+import com.example.soundcore.ui.theme.azul4
 import com.example.soundcore.ui.theme.backgroundClaro
 import com.example.soundcore.ui.theme.backgroundOscuro
 import com.google.firebase.auth.FirebaseAuth
@@ -122,13 +123,13 @@ fun BuscarScreen(navController: NavController) {
                                 .height(50.dp),
                             placeholder = { Text("Buscar") },
                             colors = TextFieldDefaults.textFieldColors(
-                                backgroundColor = backgroundClaro,
-                                textColor = Color.White,
-                                placeholderColor = Color.White.copy(alpha = 0.7f),
-                                cursorColor = Color.White,
+                                backgroundColor = azul4,
+                                textColor = Color.Black,
+                                placeholderColor = Color.Black.copy(alpha = 0.7f),
+                                cursorColor = Color.Black,
                                 focusedIndicatorColor = Color.Transparent,
                             ),
-                            textStyle = TextStyle(color = Color.White, fontSize = 16.sp),
+                            textStyle = TextStyle(color = Color.Black, fontSize = 16.sp),
                             singleLine = true,
                             shape = RoundedCornerShape(5.dp),
                         )

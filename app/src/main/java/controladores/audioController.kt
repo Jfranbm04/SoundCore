@@ -24,6 +24,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 
 
@@ -104,6 +105,7 @@ private fun uploadAudioToFirebase(context: Context) {
         }
 }
 
+// Escuchar audio grabado
 fun playRecording(context: Context, onCompletion: () -> Unit) {
     mediaPlayer = MediaPlayer().apply {
         try {
@@ -120,55 +122,37 @@ fun playRecording(context: Context, onCompletion: () -> Unit) {
     }
 }
 
+// Escuchar audio según nombre por parámetro
+fun playStoredRecording(context: Context, fileName: String, onCompletion: () -> Unit) {
+    val storageReference = FirebaseStorage.getInstance().reference.child("audios/$fileName")
+    storageReference.downloadUrl.addOnSuccessListener { uri ->
+        MediaPlayer().apply {
+            try {
+                setDataSource(context, uri)
+                prepare()
+                start()
+                setOnCompletionListener {
+                    onCompletion()
+                }
+            } catch (e: IOException) {
+                Log.e("AudioRecorderController", "playStoredRecording() failed")
+                Toast.makeText(context, "Error al reproducir grabación", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }.addOnFailureListener { e ->
+        Log.e("AudioRecorderController", "Error al obtener URL de grabación", e)
+        Toast.makeText(context, "Error al obtener URL de grabación", Toast.LENGTH_SHORT).show()
+    }
+}
+
+
+
 fun stopPlaying() {
     mediaPlayer?.release()
     mediaPlayer = null
 }
 
-fun evaluateRecording(context: Context): Int {
-//    val audioFilePath = File(context.getExternalFilesDir(null), currentFileName).absolutePath
-//
-//    Log.d("Evaluation", "Evaluando archivo de audio: $currentFileName en la ruta: $audioFilePath")
-//
-//    val audioFile = File(audioFilePath)
-//
-//    if (!audioFile.exists()) {
-//        Log.e("Evaluation", "El archivo de audio no existe en la ubicación esperada: $audioFilePath")
-//        return 0
-//    }
-//
-//    var maxAmplitude = 0
-//    val mediaPlayer = MediaPlayer()
-//    try {
-//        mediaPlayer.setDataSource(audioFile.path)
-//        mediaPlayer.prepare()
-//
-//
-//        val timer = object : CountDownTimer(mediaPlayer.duration.toLong(), 100) {
-//            override fun onTick(millisUntilFinished: Long) {
-//                val amplitude = mediaPlayer.audioSessionId
-//                if (amplitude > maxAmplitude) {
-//                    maxAmplitude = amplitude
-//                }
-//            }
-//
-//            override fun onFinish() {
-//                mediaPlayer.stop()
-//                mediaPlayer.release()
-//            }
-//        }
-//        timer.start()
-//    } catch (e: Exception) {
-//        Log.e("Evaluation", "Error al reproducir el archivo de audio: ${e.message}")
-//        e.printStackTrace()
-//        mediaPlayer.release()
-//        return 0
-//    }
-//
-//    val maxDb = 20 * log10(maxAmplitude.toDouble() / 32768.0)
-//    return (maxDb / 120 * 100).toInt().coerceIn(1, 100)
-    return 0
-}
+
 
 // Método que saca el decibelio máximo (sacado de internet)
 suspend fun obtenerMaxDecibelio(context: Context): Double {
@@ -257,4 +241,70 @@ fun enviarPalmada(context: Context, puntuacion: Int) {
     } else {
         Toast.makeText(context, "Usuario no autenticado", Toast.LENGTH_SHORT).show()
     }
+}
+
+suspend fun obtenerAudiosUsuario(uid: String): List<Map<String, Any>>? {
+    val firestore = FirebaseFirestore.getInstance()
+    return try {
+        val usuarioDoc = firestore.collection("usuarios").document(uid).get().await()
+        val listaPalmadas = usuarioDoc.get("listaPalmadas") as? List<String> ?: return emptyList()
+        val audios = mutableListOf<Map<String, Any>>()
+        for (palmadaId in listaPalmadas) {
+            val palmadaDoc = firestore.collection("Palmadas").document(palmadaId).get().await()
+            if (palmadaDoc.exists()) {
+                audios.add(palmadaDoc.data!!)
+            }
+        }
+        audios
+    } catch (e: Exception) {
+        Log.e("Firestore", "Error obteniendo audios del usuario", e)
+        null
+    }
+}
+
+
+
+fun evaluateRecording(context: Context): Int {
+//    val audioFilePath = File(context.getExternalFilesDir(null), currentFileName).absolutePath
+//
+//    Log.d("Evaluation", "Evaluando archivo de audio: $currentFileName en la ruta: $audioFilePath")
+//
+//    val audioFile = File(audioFilePath)
+//
+//    if (!audioFile.exists()) {
+//        Log.e("Evaluation", "El archivo de audio no existe en la ubicación esperada: $audioFilePath")
+//        return 0
+//    }
+//
+//    var maxAmplitude = 0
+//    val mediaPlayer = MediaPlayer()
+//    try {
+//        mediaPlayer.setDataSource(audioFile.path)
+//        mediaPlayer.prepare()
+//
+//
+//        val timer = object : CountDownTimer(mediaPlayer.duration.toLong(), 100) {
+//            override fun onTick(millisUntilFinished: Long) {
+//                val amplitude = mediaPlayer.audioSessionId
+//                if (amplitude > maxAmplitude) {
+//                    maxAmplitude = amplitude
+//                }
+//            }
+//
+//            override fun onFinish() {
+//                mediaPlayer.stop()
+//                mediaPlayer.release()
+//            }
+//        }
+//        timer.start()
+//    } catch (e: Exception) {
+//        Log.e("Evaluation", "Error al reproducir el archivo de audio: ${e.message}")
+//        e.printStackTrace()
+//        mediaPlayer.release()
+//        return 0
+//    }
+//
+//    val maxDb = 20 * log10(maxAmplitude.toDouble() / 32768.0)
+//    return (maxDb / 120 * 100).toInt().coerceIn(1, 100)
+    return 0
 }

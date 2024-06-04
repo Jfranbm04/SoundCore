@@ -13,19 +13,26 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Badge
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -60,14 +67,18 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import controladores.descargarImagen
+import controladores.obtenerAudiosUsuario
 import controladores.obtenerDatosUsuario
+import controladores.obtenerNumeroSolicitudes
 import controladores.obtenerUrlFotoPerfil
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import modelos.AudioCard
 import modelos.Paths
 
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PerfilScreen(navController: NavController) {
     val currentUser = FirebaseAuth.getInstance().currentUser
@@ -75,6 +86,8 @@ fun PerfilScreen(navController: NavController) {
     var isLoading by remember { mutableStateOf(true) }
     val coroutineScope = rememberCoroutineScope()
     var fotoPerfilBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var audiosList by remember { mutableStateOf<List<Map<String, Any>>?>(null) }
+    var solicitudesCount by remember { mutableStateOf(0) }
 
     LaunchedEffect(currentUser?.uid) {
         currentUser?.uid?.let { uid ->
@@ -82,9 +95,10 @@ fun PerfilScreen(navController: NavController) {
                 userData = obtenerDatosUsuario(uid)
                 val fotoPerfilUrl = obtenerUrlFotoPerfil(uid)
                 fotoPerfilUrl?.let {
-                    // Descargar la imagen de Firebase Storage
                     fotoPerfilBitmap = descargarImagen(it)
                 }
+                audiosList = obtenerAudiosUsuario(uid)
+                solicitudesCount = obtenerNumeroSolicitudes(uid)
                 isLoading = false
             }
         } ?: run {
@@ -99,7 +113,16 @@ fun PerfilScreen(navController: NavController) {
                 backgroundColor = backgroundOscuro,
                 actions = {
                     IconButton(onClick = { navController.navigate("solicitudes") }) {
-                        Icon(Icons.Default.MailOutline, contentDescription = "Solicitudes de amistad", tint = Color.White)
+                        BadgedBox(badge = {
+                            if (solicitudesCount > 0) {
+                                Badge(
+                                    modifier = Modifier.size(4.dp),
+                                    backgroundColor = Color.Red
+                                )
+                            }
+                        }) {
+                            Icon(Icons.Default.MailOutline, contentDescription = "Solicitudes de amistad", tint = Color.White)
+                        }
                     }
                     IconButton(onClick = { navController.navigate("ajustes") }) {
                         Icon(Icons.Default.Settings, contentDescription = "Ajustes", tint = Color.White)
@@ -122,7 +145,6 @@ fun PerfilScreen(navController: NavController) {
                         Column(horizontalAlignment = Alignment.Start, modifier = Modifier.padding(8.dp)) {
                             Row(verticalAlignment = Alignment.Top) {
                                 fotoPerfilBitmap?.let { bitmap ->
-                                    // Mostrar la imagen de la foto de perfil
                                     Image(
                                         bitmap = bitmap.asImageBitmap(),
                                         contentDescription = "Foto de perfil",
@@ -133,7 +155,6 @@ fun PerfilScreen(navController: NavController) {
                                         contentScale = ContentScale.Crop
                                     )
                                 } ?: run {
-                                    // Mostrar un círculo azul claro en lugar de la foto de perfil si no está disponible
                                     Image(
                                         painter = painterResource(id = R.drawable.google_logo),
                                         contentDescription = "Foto de perfil",
@@ -143,7 +164,6 @@ fun PerfilScreen(navController: NavController) {
 
                                 Spacer(modifier = Modifier.width(8.dp))
 
-                                // Nombre y correo electrónico del usuario
                                 Column {
                                     Text(
                                         text = "${data["nombreUsuario"] ?: "Nombre no disponible"}",
@@ -158,7 +178,6 @@ fun PerfilScreen(navController: NavController) {
 
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            // Editar perfil y Estadísticas
                             Row(horizontalArrangement = Arrangement.SpaceBetween) {
                                 Button(
                                     onClick = { navController.navigate("editarPerfil") },
@@ -172,13 +191,37 @@ fun PerfilScreen(navController: NavController) {
                                 }
 
                                 Button(
-                                    onClick = { /* Navegar a la pantalla de estadísticas del usuario */ },
+                                    onClick = { navController.navigate("listaAmigos") },
                                     shape = RoundedCornerShape(4.dp),
                                     colors = ButtonDefaults.buttonColors(
                                         backgroundColor = azul1
                                     )
                                 ) {
-                                    Text(text = "Estadísticas", color = Color.White)
+                                    Text(text = "Tus amigos", color = Color.White)
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(80.dp))
+
+                            Divider(color = backgroundClaro, modifier = Modifier.fillMaxWidth().height(5.dp))
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = "Tu colección",
+                                color = Color.White,
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.align(Alignment.CenterHorizontally)
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            audiosList?.let { audios ->
+                                LazyColumn {
+                                    items(audios) { audio ->
+                                        AudioCard(audio = audio)
+                                    }
                                 }
                             }
                         }

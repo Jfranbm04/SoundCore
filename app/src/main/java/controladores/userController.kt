@@ -68,7 +68,7 @@ fun comprobarRegistro(navController: NavController, contexto: Context, nombreUsu
 }
 
 // Función para subir la foto de perfil a Firebase Storage
-private fun subirFotoPerfil(uid: String, fotoPerfil: Uri?, onSuccess: (String) -> Unit) {
+fun subirFotoPerfil(uid: String, fotoPerfil: Uri?, onSuccess: (String) -> Unit) {
     if (fotoPerfil == null) {
         onSuccess("") // No hay foto de perfil, continuar con URL vacía
         return
@@ -83,7 +83,7 @@ private fun subirFotoPerfil(uid: String, fotoPerfil: Uri?, onSuccess: (String) -
             onSuccess(uri.toString())
         }
     }.addOnFailureListener { exception ->
-        Log.e(TAG, "Error al subir la foto de perfil", exception)
+        Log.e("EditarPerfilScreen", "Error al subir la foto de perfil", exception)
         onSuccess("") // Continuar con URL vacía en caso de fallo
     }
 }
@@ -95,7 +95,7 @@ suspend fun descargarImagen(url: String): Bitmap? {
         val fotoPerfilBytes = storageReference.getBytes(10 * 1024 * 1024).await() // Descargar hasta 10MB
         BitmapFactory.decodeByteArray(fotoPerfilBytes, 0, fotoPerfilBytes.size)
     } catch (e: Exception) {
-        Log.e("PerfilScreen", "Error al descargar la imagen de perfil: $e")
+        Log.e("EditarPerfilScreen", "Error al descargar la imagen de perfil: $e")
         null
     }
 }
@@ -121,7 +121,7 @@ private fun crearUsuarioFirestore(uid: String, nombreUsuario: String, email: Str
         }
 }
 
-// Sacar datos usuario firestore
+// Función para obtener los datos del usuario desde Firestore
 suspend fun obtenerDatosUsuario(uid: String): Map<String, Any>? {
     val firestore = FirebaseFirestore.getInstance()
     return try {
@@ -137,7 +137,6 @@ suspend fun obtenerDatosUsuario(uid: String): Map<String, Any>? {
         null
     }
 }
-
 // Sacar imagen usuario storage
 suspend fun obtenerUrlFotoPerfil(uid: String): String? {
     return try {
@@ -292,6 +291,19 @@ suspend fun obtenerNombreUsuario(uid: String): String? {
     }
 }
 
+// Función para badge de solicitudes de amistad
+suspend fun obtenerNumeroSolicitudes(uidDestinatario: String): Int {
+    val firestore = FirebaseFirestore.getInstance()
+    return try {
+        val documents = firestore.collection("solicitudes")
+            .whereEqualTo("uidDestinatario", uidDestinatario)
+            .get().await()
+        documents.size()
+    } catch (e: Exception) {
+        Log.e("UserController", "Error al obtener el número de solicitudes de amistad", e)
+        0
+    }
+}
 
 
 
