@@ -126,47 +126,48 @@ fun stopPlaying() {
 }
 
 fun evaluateRecording(context: Context): Int {
-    val audioFilePath = File(context.getExternalFilesDir(null), currentFileName).absolutePath
-
-    Log.d("Evaluation", "Evaluando archivo de audio: $currentFileName en la ruta: $audioFilePath")
-
-    val audioFile = File(audioFilePath)
-
-    if (!audioFile.exists()) {
-        Log.e("Evaluation", "El archivo de audio no existe en la ubicación esperada: $audioFilePath")
-        return 0
-    }
-
-    var maxAmplitude = 0
-    val mediaPlayer = MediaPlayer()
-    try {
-        mediaPlayer.setDataSource(audioFile.path)
-        mediaPlayer.prepare()
-
-
-        val timer = object : CountDownTimer(mediaPlayer.duration.toLong(), 100) {
-            override fun onTick(millisUntilFinished: Long) {
-                val amplitude = mediaPlayer.audioSessionId
-                if (amplitude > maxAmplitude) {
-                    maxAmplitude = amplitude
-                }
-            }
-
-            override fun onFinish() {
-                mediaPlayer.stop()
-                mediaPlayer.release()
-            }
-        }
-        timer.start()
-    } catch (e: Exception) {
-        Log.e("Evaluation", "Error al reproducir el archivo de audio: ${e.message}")
-        e.printStackTrace()
-        mediaPlayer.release()
-        return 0
-    }
-
-    val maxDb = 20 * log10(maxAmplitude.toDouble() / 32768.0)
-    return (maxDb / 120 * 100).toInt().coerceIn(1, 100)
+//    val audioFilePath = File(context.getExternalFilesDir(null), currentFileName).absolutePath
+//
+//    Log.d("Evaluation", "Evaluando archivo de audio: $currentFileName en la ruta: $audioFilePath")
+//
+//    val audioFile = File(audioFilePath)
+//
+//    if (!audioFile.exists()) {
+//        Log.e("Evaluation", "El archivo de audio no existe en la ubicación esperada: $audioFilePath")
+//        return 0
+//    }
+//
+//    var maxAmplitude = 0
+//    val mediaPlayer = MediaPlayer()
+//    try {
+//        mediaPlayer.setDataSource(audioFile.path)
+//        mediaPlayer.prepare()
+//
+//
+//        val timer = object : CountDownTimer(mediaPlayer.duration.toLong(), 100) {
+//            override fun onTick(millisUntilFinished: Long) {
+//                val amplitude = mediaPlayer.audioSessionId
+//                if (amplitude > maxAmplitude) {
+//                    maxAmplitude = amplitude
+//                }
+//            }
+//
+//            override fun onFinish() {
+//                mediaPlayer.stop()
+//                mediaPlayer.release()
+//            }
+//        }
+//        timer.start()
+//    } catch (e: Exception) {
+//        Log.e("Evaluation", "Error al reproducir el archivo de audio: ${e.message}")
+//        e.printStackTrace()
+//        mediaPlayer.release()
+//        return 0
+//    }
+//
+//    val maxDb = 20 * log10(maxAmplitude.toDouble() / 32768.0)
+//    return (maxDb / 120 * 100).toInt().coerceIn(1, 100)
+    return 0
 }
 
 // Método que saca el decibelio máximo (sacado de internet)
@@ -211,7 +212,7 @@ fun normalizeDecibel(decibel: Double): Int {
 }
 
 
-fun enviarPalmada(context: Context, puntuacion: Int, nombreAudio: String) {
+fun enviarPalmada(context: Context, puntuacion: Int) {
     val auth = FirebaseAuth.getInstance()
     val firestore = FirebaseFirestore.getInstance()
     val user = auth.currentUser
@@ -228,7 +229,7 @@ fun enviarPalmada(context: Context, puntuacion: Int, nombreAudio: String) {
         // Crear un objeto con los datos de la palmada
         val palmadaData = hashMapOf(
             "UIDUsuario" to uidUsuario,
-            "nombreAudio" to nombreAudio,
+            "nombreAudio" to currentFileName,
             "puntuacion" to puntuacion
         )
 

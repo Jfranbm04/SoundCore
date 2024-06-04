@@ -71,9 +71,7 @@ Cuando se pulse el botón enviar palmada, vamos a añadir:
  - un registro en la listaPalmadas con el UID de la palmada, sacada de la tabla Palmadas
 */
 
-// JFDA: Me da problemas a la hora de enviar la puntuación a Palmadas, ya que me envía "1" (mirar linea 257).
-// JFDA: También me da problemas al sacar el nombre del fichero con System.currentTimeMillis, ya que no es el mismo tiempo cuando se crea el audio que cuando se envía.
-// JFDA: Revisar Buscar.kt que aparezca la misma persona que está usando la app, modal "Enviar solicitud" / "Ya sois amigos, ver perfil", pantalla editarPerfil.kt
+// JFDA: Revisar Buscar.kt que no aparezca la misma persona que está usando la app, modal "Enviar solicitud" / "Ya sois amigos, ver perfil", pantalla editarPerfil.kt
 
 @Composable
 fun HomeScreen(navController: NavController) {
@@ -274,9 +272,8 @@ fun HomeScreen(navController: NavController) {
 //                                }
                                 Button(
                                     onClick = {
-                                        val evaluation = evaluateRecording(context)
-                                        val nombreAudio = "audiorecord_" + System.currentTimeMillis() + ".3gp"
-                                        enviarPalmada(context, evaluation, nombreAudio)
+//                                        val evaluation = evaluateRecording(context)
+                                        audioScore?.let { enviarPalmada(context, it) }
                                     },
                                     shape = RoundedCornerShape(4.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = azul2)
