@@ -117,8 +117,8 @@ fun logo(navController: NavController) {
 
 @Composable
 fun correoContraseña(navController: NavController) {
-    var email by rememberSaveable { mutableStateOf("b@b.com") }
-    var password by rememberSaveable { mutableStateOf("123456") }
+    var email by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
     var isLoginEnable by rememberSaveable { mutableStateOf(false) }
 
     Column {

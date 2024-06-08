@@ -2,9 +2,11 @@ package modelos
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHost
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.google.firebase.auth.FirebaseAuth
 import vistas.AjustesScreen
 import vistas.BuscarScreen
@@ -14,6 +16,7 @@ import vistas.ListaAmigosScreen
 import vistas.LoginScreen
 import vistas.MainScreen
 import vistas.PerfilScreen
+import vistas.PerfilUsuarioScreen
 import vistas.RankingAmigosScreen
 import vistas.RankingGlobalScreen
 import vistas.RankingLocalScreen
@@ -21,7 +24,7 @@ import vistas.SignUpScreen
 import vistas.SolicitudesScreen
 
 @Composable
-fun AppNavigation(){
+fun AppNavigation() {
     val navController = rememberNavController()
 
     // Verificar si ya se ha iniciado sesión
@@ -51,6 +54,13 @@ fun AppNavigation(){
         composable(route = Paths.RankingLocal.path) { RankingLocalScreen(navController) }
         composable(route = Paths.RankingAmigos.path) { RankingAmigosScreen(navController) }
         composable(route = Paths.RankingGlobal.path) { RankingGlobalScreen(navController) }
+        composable(
+            route = "${Paths.PerfilUsuario.path}/{userId}",
+            arguments = listOf(navArgument("userId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            PerfilUsuarioScreen(navController, backStackEntry.arguments?.getString("userId") ?: "")
+        }
     }
 }
+
 

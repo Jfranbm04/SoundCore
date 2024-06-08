@@ -385,3 +385,41 @@ suspend fun eliminarCuenta(context: Context, navController: NavController) {
     }
 }
 
+// Función para comprobar si dos usuarios son amigos (sirve para el perfilAmigo)
+suspend fun sonAmigos(uidUsuario1: String, uidUsuario2: String): Boolean {
+    val firestore = FirebaseFirestore.getInstance()
+    return try {
+        val usuario1Doc = firestore.collection("usuarios").document(uidUsuario1).get().await()
+        val listaAmigos = usuario1Doc.get("listaAmigos") as? List<String>
+        listaAmigos?.contains(uidUsuario2) == true
+    } catch (e: Exception) {
+        Log.e("Firestore", "Error comprobando la amistad entre usuarios", e)
+        false
+    }
+}
+
+// Función para eliminar amigo
+fun eliminarAmigo(uidActual: String, uidAmigo: String) {
+    val firestore = FirebaseFirestore.getInstance()
+
+    // Remover uidAmigo de la lista de amigos de uidActual
+    val actualRef = firestore.collection("usuarios").document(uidActual)
+    actualRef.update("listaAmigos", FieldValue.arrayRemove(uidAmigo))
+        .addOnSuccessListener {
+            Log.d("UserController", "Amigo eliminado de la lista del usuario actual")
+        }
+        .addOnFailureListener { e ->
+            Log.e("UserController", "Error al eliminar amigo de la lista del usuario actual", e)
+        }
+
+    // Remover uidActual de la lista de amigos de uidAmigo
+    val amigoRef = firestore.collection("usuarios").document(uidAmigo)
+    amigoRef.update("listaAmigos", FieldValue.arrayRemove(uidActual))
+        .addOnSuccessListener {
+            Log.d("UserController", "Amigo eliminado de la lista del amigo")
+        }
+        .addOnFailureListener { e ->
+            Log.e("UserController", "Error al eliminar amigo de la lista del amigo", e)
+        }
+}
+

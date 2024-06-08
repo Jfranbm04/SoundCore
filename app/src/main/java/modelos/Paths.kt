@@ -15,4 +15,5 @@ sealed class Paths (val path: String){
     object RankingLocal : Paths("rankingLocal")
     object RankingAmigos : Paths("rankingAmigos")
     object RankingGlobal : Paths("rankingGlobal")
+    object PerfilUsuario : Paths("perfilUsuario")
 }

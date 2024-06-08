@@ -100,14 +100,16 @@ fun ListaAmigosScreen(navController: NavController) {
                                 val nombreUsuario = amigo["nombreUsuario"] as? String ?: "Nombre no disponible"
                                 val fotoPerfilUrl = amigo["fotoPerfilUrl"] as? String
                                 UsuarioCard(nombreUsuario = nombreUsuario, fotoPerfilUrl = fotoPerfilUrl) {
-                                    // Acción al hacer clic en el card del amigo (navegar a perfil del amigo, por ejemplo)
+                                    val userId = amigo["uid"] as? String
+                                    userId?.let { id ->
+                                        navController.navigate("${Paths.PerfilUsuario.path}/$id")
+                                    }
                                 }
                             }
                         }
-                    } ?: run {
-                        Text(text = "No tienes amigos en tu lista", color = Color.White)
-                    }
+                    } ?: Text(text = "No tienes amigos en tu lista", color = Color.White)
                 }
+
             }
         }
     )
