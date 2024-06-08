@@ -21,6 +21,7 @@ import com.arthenica.ffmpegkit.ReturnCode
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.Dispatchers
@@ -190,9 +191,9 @@ fun normalizeDecibel(decibel: Double): Int {
     val maxDb = 0.0
     val range = maxDb - minDb
 
-    val normalized = ((decibel - minDb) * (100 - 1) / range) + 1
+    val normalized = ((decibel - minDb) * (100 - 0) / range) + 0
 
-    return normalized.toInt().coerceIn(1, 100)
+    return normalized.toInt().coerceIn(0, 100)
 }
 
 
@@ -262,49 +263,94 @@ suspend fun obtenerAudiosUsuario(uid: String): List<Map<String, Any>>? {
     }
 }
 
-
-
-fun evaluateRecording(context: Context): Int {
-//    val audioFilePath = File(context.getExternalFilesDir(null), currentFileName).absolutePath
-//
-//    Log.d("Evaluation", "Evaluando archivo de audio: $currentFileName en la ruta: $audioFilePath")
-//
-//    val audioFile = File(audioFilePath)
-//
-//    if (!audioFile.exists()) {
-//        Log.e("Evaluation", "El archivo de audio no existe en la ubicación esperada: $audioFilePath")
-//        return 0
-//    }
-//
-//    var maxAmplitude = 0
-//    val mediaPlayer = MediaPlayer()
-//    try {
-//        mediaPlayer.setDataSource(audioFile.path)
-//        mediaPlayer.prepare()
-//
-//
-//        val timer = object : CountDownTimer(mediaPlayer.duration.toLong(), 100) {
-//            override fun onTick(millisUntilFinished: Long) {
-//                val amplitude = mediaPlayer.audioSessionId
-//                if (amplitude > maxAmplitude) {
-//                    maxAmplitude = amplitude
-//                }
-//            }
-//
-//            override fun onFinish() {
-//                mediaPlayer.stop()
-//                mediaPlayer.release()
-//            }
-//        }
-//        timer.start()
-//    } catch (e: Exception) {
-//        Log.e("Evaluation", "Error al reproducir el archivo de audio: ${e.message}")
-//        e.printStackTrace()
-//        mediaPlayer.release()
-//        return 0
-//    }
-//
-//    val maxDb = 20 * log10(maxAmplitude.toDouble() / 32768.0)
-//    return (maxDb / 120 * 100).toInt().coerceIn(1, 100)
-    return 0
+// Función para ordenar los audios para el ranking
+fun ordenarAudiosPorPuntuacion(audios: List<Map<String, Any>>): List<Map<String, Any>> {
+    return audios.sortedByDescending { it["puntuacion"] as? Long ?: 0L }
 }
+
+// Función para obtener todos los audios de los amigos del usuario
+suspend fun obtenerPalmadasAmigos(uid: String): List<Map<String, Any>>? {   // Los ordeno en una función aparte (la utilizaré más veces)
+    val firestore = FirebaseFirestore.getInstance()
+    return try {
+        val usuarioDoc = firestore.collection("usuarios").document(uid).get().await()
+        val listaAmigos = usuarioDoc.get("listaAmigos") as? List<String> ?: return emptyList()
+        val listaPalmadas = mutableListOf<String>()
+
+        listaPalmadas.addAll(usuarioDoc.get("listaPalmadas") as? List<String> ?: emptyList())
+
+        for (amigoId in listaAmigos) {
+            val amigoDoc = firestore.collection("usuarios").document(amigoId).get().await()
+            listaPalmadas.addAll(amigoDoc.get("listaPalmadas") as? List<String> ?: emptyList())
+        }
+
+        val audios = mutableListOf<Map<String, Any>>()
+        for (palmadaId in listaPalmadas) {
+            val palmadaDoc = firestore.collection("Palmadas").document(palmadaId).get().await()
+            if (palmadaDoc.exists()) {
+                audios.add(palmadaDoc.data!!)
+            }
+        }
+        audios
+    } catch (e: Exception) {
+        Log.e("Firestore", "Error obteniendo palmadas de amigos", e)
+        null
+    }
+}
+
+suspend fun obtenerTopPalmadasGlobales(): List<Map<String, Any>> {
+    val firestore = FirebaseFirestore.getInstance()
+    return try {
+        val palmadasQuery = firestore.collection("Palmadas")    // Consulta hecha desde aquí
+            .orderBy("puntuacion", Query.Direction.DESCENDING)
+            .limit(10)
+            .get()
+            .await()
+
+        palmadasQuery.documents.mapNotNull { it.data }
+    } catch (e: Exception) {
+        Log.e("Firestore", "Error obteniendo las mejores palmadas globales", e)
+        emptyList()
+    }
+}
+
+// Función para eliminar todas las palmadas
+suspend fun eliminarPalmadasUsuario(context: Context) {
+    val firestore = FirebaseFirestore.getInstance()
+    val storage = FirebaseStorage.getInstance()
+    val auth = FirebaseAuth.getInstance()
+    val user = auth.currentUser
+
+    if (user != null) {
+        val uidUsuario = user.uid
+
+        try {
+            val usuarioDoc = firestore.collection("usuarios").document(uidUsuario).get().await()
+            val listaPalmadas = usuarioDoc.get("listaPalmadas") as? List<String> ?: return
+
+            // Eliminar cada palmada en Firestore y Firebase Storage
+            listaPalmadas.forEach { palmadaId ->
+                val palmadaDoc = firestore.collection("Palmadas").document(palmadaId).get().await()
+                if (palmadaDoc.exists()) {
+                    val nombreAudio = palmadaDoc.getString("nombreAudio")
+                    if (!nombreAudio.isNullOrEmpty()) {
+                        val audioRef = storage.reference.child("audios/$nombreAudio") // Se elimina de Storage
+                        audioRef.delete().await()
+                    }
+                    firestore.collection("Palmadas").document(palmadaId).delete().await() // Se elimina de firestore
+                }
+            }
+
+            // Actualizar el documento del usuario para eliminar la lista de palmadas
+            firestore.collection("usuarios").document(uidUsuario).update("listaPalmadas", emptyList<String>()).await()
+
+            Log.d("Firestore", "Se han eliminado todas las palmadas")
+        } catch (e: Exception) {
+            Log.e("Firestore", "Error eliminando palmadas del usuario", e)
+            Toast.makeText(context, "Error al eliminar tus palmadas", Toast.LENGTH_SHORT).show()
+        }
+    } else {
+        Toast.makeText(context, "Usuario no autenticado", Toast.LENGTH_SHORT).show()
+    }
+}
+
+

@@ -14,6 +14,9 @@ import vistas.ListaAmigosScreen
 import vistas.LoginScreen
 import vistas.MainScreen
 import vistas.PerfilScreen
+import vistas.RankingAmigosScreen
+import vistas.RankingGlobalScreen
+import vistas.RankingLocalScreen
 import vistas.SignUpScreen
 import vistas.SolicitudesScreen
 
@@ -45,6 +48,9 @@ fun AppNavigation(){
         composable(route = Paths.EditarPerfil.path) { EditarPerfilScreen(navController) }
         composable(route = Paths.Solicitudes.path) { SolicitudesScreen(navController) }
         composable(route = Paths.ListaAmigos.path) { ListaAmigosScreen(navController) }
+        composable(route = Paths.RankingLocal.path) { RankingLocalScreen(navController) }
+        composable(route = Paths.RankingAmigos.path) { RankingAmigosScreen(navController) }
+        composable(route = Paths.RankingGlobal.path) { RankingGlobalScreen(navController) }
     }
 }
 

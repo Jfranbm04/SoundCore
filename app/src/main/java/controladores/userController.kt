@@ -40,8 +40,6 @@ fun comprobarLogin(navController: NavController, contexto: Context, email: Strin
         }
 }
 
-//private const val TAG = "UserController"
-
 // Función para comprobar registro
 fun comprobarRegistro(navController: NavController, contexto: Context, nombreUsuario: String, email: String, contraseña: String, fotoPerfil: Uri?) {
     val auth = FirebaseAuth.getInstance()
@@ -308,6 +306,82 @@ suspend fun obtenerNumeroSolicitudes(uidDestinatario: String): Int {
     }
 }
 
+suspend fun obtenerPalmadasDeTodosLosUsuarios(): List<Map<String, Any>> {
+    val firestore = FirebaseFirestore.getInstance()
+    val palmadasList = mutableListOf<Map<String, Any>>()
 
+    try {
+        // Obtener todos los documentos de la colección "palmadas"
+        val querySnapshot = firestore.collection("palmadas").get().await()
 
+        // Iterar sobre cada documento para obtener los datos de la palmada
+        for (document in querySnapshot.documents) {
+            val data = document.data
+            if (data != null) {
+                palmadasList.add(data)
+            }
+        }
+    } catch (e: Exception) {
+        Log.e("Firestore", "Error al obtener las palmadas de todos los usuarios", e)
+    }
+
+    return palmadasList
+}
+
+suspend fun eliminarCuenta(context: Context, navController: NavController) {
+    val firestore = FirebaseFirestore.getInstance()
+    val storage = FirebaseStorage.getInstance()
+    val auth = FirebaseAuth.getInstance()
+    val user = auth.currentUser
+
+    if (user != null) {
+        val uidUsuario = user.uid
+
+        try {
+            // Obtener las palmadas del usuario
+            val usuarioDoc = firestore.collection("usuarios").document(uidUsuario).get().await()
+            val listaPalmadas = usuarioDoc.get("listaPalmadas") as? List<String> ?: emptyList()
+
+            // Eliminar cada palmada en Firestore y Firebase Storage
+            listaPalmadas.forEach { palmadaId ->
+                val palmadaDoc = firestore.collection("Palmadas").document(palmadaId).get().await()
+                if (palmadaDoc.exists()) {
+                    val nombreAudio = palmadaDoc.getString("nombreAudio")
+                    if (!nombreAudio.isNullOrEmpty()) {
+                        val audioRef = storage.reference.child("audios/$nombreAudio")
+                        audioRef.delete().await()
+                    }
+                    firestore.collection("Palmadas").document(palmadaId).delete().await()
+                }
+            }
+
+            // Eliminar la foto de perfil del usuario si existe
+            val fotoPerfilUrl = usuarioDoc.getString("fotoPerfilUrl")
+            if (!fotoPerfilUrl.isNullOrEmpty()) {
+                val fotoPerfilRef = storage.getReferenceFromUrl(fotoPerfilUrl)
+                fotoPerfilRef.delete().await()
+            }
+
+            // Eliminar el documento del usuario en Firestore
+            firestore.collection("usuarios").document(uidUsuario).delete().await()
+
+            // Eliminar el usuario de Firebase Authentication
+            user.delete().await()
+
+            Log.d("Firestore", "Cuenta de usuario eliminada correctamente")
+            Toast.makeText(context, "Cuenta eliminada correctamente", Toast.LENGTH_SHORT).show()
+
+            // Navegar a la pantalla de inicio de sesión
+            navController.navigate(Paths.login.path) {
+                popUpTo(0) { inclusive = true }
+            }
+
+        } catch (e: Exception) {
+            Log.e("Firestore", "Error eliminando la cuenta del usuario", e)
+            Toast.makeText(context, "Error al eliminar la cuenta", Toast.LENGTH_SHORT).show()
+        }
+    } else {
+        Toast.makeText(context, "Usuario no autenticado", Toast.LENGTH_SHORT).show()
+    }
+}
 

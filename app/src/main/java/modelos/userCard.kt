@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -21,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.soundcore.R
@@ -39,7 +41,7 @@ fun UsuarioCard(nombreUsuario: String, fotoPerfilUrl: String?, onClick: () -> Un
             .fillMaxWidth()
             .padding(8.dp)
             .background(Color.Transparent)
-            .clickable(onClick = onClick) // Añadir clickable
+            .clickable(onClick = onClick)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -53,7 +55,8 @@ fun UsuarioCard(nombreUsuario: String, fotoPerfilUrl: String?, onClick: () -> Un
                     contentDescription = "Foto de perfil de $nombreUsuario",
                     modifier = Modifier
                         .size(64.dp)
-                        .clip(CircleShape)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop // Ajusta la imagen al contenedor (Se recorta la imagen si es necesario)
                 )
             } else {
                 Icon(
@@ -61,7 +64,8 @@ fun UsuarioCard(nombreUsuario: String, fotoPerfilUrl: String?, onClick: () -> Un
                     contentDescription = "Foto de perfil por defecto",
                     modifier = Modifier
                         .size(64.dp)
-                        .clip(CircleShape)
+                        .clip(CircleShape),
+
                 )
             }
             Spacer(modifier = Modifier.width(16.dp))

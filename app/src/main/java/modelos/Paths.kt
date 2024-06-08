@@ -12,4 +12,7 @@ sealed class Paths (val path: String){
     object EditarPerfil : Paths("editarPerfil")
     object Solicitudes : Paths("solicitudes")
     object ListaAmigos : Paths("listaAmigos")
+    object RankingLocal : Paths("rankingLocal")
+    object RankingAmigos : Paths("rankingAmigos")
+    object RankingGlobal : Paths("rankingGlobal")
 }

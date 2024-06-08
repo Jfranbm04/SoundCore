@@ -101,21 +101,21 @@ fun HomeScreen(navController: NavController) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    // Request permission launcher
+    // Pedir permisos
     val requestPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         hasPermission.value = isGranted
     }
 
-    // Check for permission
+    // Comprobar permisos
     LaunchedEffect(Unit) {
         if (!hasPermission.value) {
             requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
     }
 
-    // LaunchedEffect to manage the progress indicator and audio recording
+    // LaunchedEffect para manejar la grabación del audio y el progress indicator
     LaunchedEffect(isPlaying) {
         if (isPlaying && hasPermission.value) {
             showProgress = true
@@ -188,9 +188,9 @@ fun HomeScreen(navController: NavController) {
                 }
                 Divider(color = Color.White, thickness = 1.dp)
                 Spacer(modifier = Modifier.height(16.dp))
-                DrawerItem("Ranking local") {  }
-                DrawerItem("Ranking con amigos") {  }
-                DrawerItem("Ranking global") {  }
+                DrawerItem("Ranking local") { navController.navigate("rankingLocal") }
+                DrawerItem("Ranking con amigos") { navController.navigate("rankingAmigos") }
+                DrawerItem("Ranking global") { navController.navigate("rankingGlobal") }
             }
         },
         content = {
