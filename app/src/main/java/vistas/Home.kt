@@ -109,7 +109,7 @@ fun HomeScreen(navController: NavController) {
     val estadoDrawer = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    val lanzadorPermiso = rememberLauncherForActivityResult(
+    val requestPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { concedido: Boolean ->
         tienePermiso.value = concedido
@@ -117,7 +117,7 @@ fun HomeScreen(navController: NavController) {
 
     LaunchedEffect(Unit) {
         if (!tienePermiso.value) {
-            lanzadorPermiso.launch(Manifest.permission.RECORD_AUDIO)
+            requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
     }
 
@@ -415,7 +415,7 @@ fun HomeScreen(navController: NavController) {
                                 ) {
                                     Text(
                                         text = if (pasoTutorial < 3) "Siguiente" else "Cerrar",
-                                        color = Color.Blue
+                                        color = Color.White
                                     )
                                 }
                             }

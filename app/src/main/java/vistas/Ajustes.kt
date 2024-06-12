@@ -22,6 +22,8 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -56,6 +58,7 @@ fun AjustesScreen(navController: NavController) {
     var showDialog by remember { mutableStateOf(false) }
     var dialogMessage by remember { mutableStateOf("") }
     var onConfirmAction by remember { mutableStateOf({}) }
+    var isDarkTheme by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -83,11 +86,14 @@ fun AjustesScreen(navController: NavController) {
                     .fillMaxSize()
                     .padding(paddingValues)
                     .background(backgroundOscuro),
-                contentAlignment = Alignment.Center,
+                contentAlignment = Alignment.BottomCenter,
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 32.dp) // Aquí agregas el padding bottom
                 ) {
                     // Botón para cerrar sesión
                     Button(
@@ -159,7 +165,7 @@ fun AjustesScreen(navController: NavController) {
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text(text = "¿Estás seguro?") },
+            title = { Text(text = "Información") },
             text = { Text(text = dialogMessage) },
             confirmButton = {
                 Button(
@@ -169,7 +175,7 @@ fun AjustesScreen(navController: NavController) {
                     },
                     colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red)
                 ) {
-                    Text("Eliminar", color = Color.White)
+                    Text("Aceptar", color = Color.White)
                 }
             },
             dismissButton = {
