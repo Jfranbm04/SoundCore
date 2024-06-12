@@ -122,7 +122,7 @@ fun PerfilUsuarioScreen(navController: NavController, userId: String) {
                 title = {
                     Text(
                         text = usuario.value?.get("nombreUsuario") as? String ?: "Perfil",
-                        color = Color.White
+                        fontSize = 20.sp, color = Color.White, fontWeight = FontWeight.Bold
                     )
                 },
                 backgroundColor = backgroundOscuro,

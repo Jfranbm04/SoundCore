@@ -65,8 +65,13 @@ import controladores.playRecording
 import controladores.startRecording
 import controladores.stopRecording
 import kotlinx.coroutines.launch
-
-
+import android.content.Context
+import android.content.SharedPreferences
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import java.util.Calendar
+import java.util.concurrent.TimeUnit
 
 
 /*
@@ -74,85 +79,86 @@ Cuando se pulse el botón enviar palmada, vamos a añadir:
     - un registro en la tabla Palmadas con los campos UIDUsuario, nombreAudio (es el nombre del campo del tipo audiorecord_1717453296829.3gP que se almacena en firebase storage en la carpeta audios), puntuación.
     - un registro en la listaPalmadas con el UID de la palmada, sacada de la tabla Palmadas
 */
-// Utilizo MediaCodec y TarsosDSP para el trato de audio / FFmpegKit
-// JFDA: Revisar modal "Enviar solicitud" / "Ya sois amigos, ver perfil", pantalla editarPerfil.kt
+// Utilizo FFmpegKit para el trato de audio / MediaCodec y TarsosDSP
+
 
 
 @Composable
 fun HomeScreen(navController: NavController) {
-    var isPlaying by remember { mutableStateOf(false) }
-    var isPlayingBack by remember { mutableStateOf(false) }
-    var buttonColor by remember { mutableStateOf(azul1) }
-    var progress by remember { mutableStateOf(0f) }
-    var playbackProgress by remember { mutableStateOf(0f) }
-    var showProgress by remember { mutableStateOf(false) }
-    var showPlayback by remember { mutableStateOf(false) }
-    var showPlaybackProgress by remember { mutableStateOf(false) }
-    var audioScore by remember { mutableStateOf<Int?>(null) } // Estado para almacenar la puntuación
-    val context = LocalContext.current
-    val hasPermission = remember {
+    var estaGrabando by remember { mutableStateOf(false) }
+    var estaReproduciendo by remember { mutableStateOf(false) }
+    var colorBoton by remember { mutableStateOf(azul1) }
+    var progreso by remember { mutableStateOf(0f) }
+    var progresoReproduccion by remember { mutableStateOf(0f) }
+    var mostrarProgreso by remember { mutableStateOf(false) }
+    var mostrarReproduccion by remember { mutableStateOf(false) }
+    var mostrarProgresoReproduccion by remember { mutableStateOf(false) }
+    var puntuacionAudio by remember { mutableStateOf<Int?>(null) }
+    var aplausoEnviado by remember { mutableStateOf(false) }
+    var mostrarTutorial by remember { mutableStateOf(false) }
+    var pasoTutorial by remember { mutableStateOf(0) }
+    val contexto = LocalContext.current
+    val tienePermiso = remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
-                context,
+                contexto,
                 Manifest.permission.RECORD_AUDIO
             ) == PackageManager.PERMISSION_GRANTED
         )
     }
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val estadoDrawer = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    // Pedir permisos
-    val requestPermissionLauncher = rememberLauncherForActivityResult(
+    val lanzadorPermiso = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        hasPermission.value = isGranted
+    ) { concedido: Boolean ->
+        tienePermiso.value = concedido
     }
 
-    // Comprobar permisos
     LaunchedEffect(Unit) {
-        if (!hasPermission.value) {
-            requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        if (!tienePermiso.value) {
+            lanzadorPermiso.launch(Manifest.permission.RECORD_AUDIO)
         }
     }
 
-    // LaunchedEffect para manejar la grabación del audio y el progress indicator
-    LaunchedEffect(isPlaying) {
-        if (isPlaying && hasPermission.value) {
-            showProgress = true
-            startRecording(context)
+    LaunchedEffect(estaGrabando) {
+        if (estaGrabando && tienePermiso.value) {
+            mostrarProgreso = true
+            mostrarReproduccion = false
+            aplausoEnviado = false
+            startRecording(contexto)
 
-            val startTime = System.currentTimeMillis()
-            while (System.currentTimeMillis() - startTime < 3000) {
-                progress = (System.currentTimeMillis() - startTime) / 3000f
+            val tiempoInicio = System.currentTimeMillis()
+            while (System.currentTimeMillis() - tiempoInicio < 3000) {
+                progreso = (System.currentTimeMillis() - tiempoInicio) / 3000f
                 delay(50)
             }
-            progress = 1f
-            val score = stopRecording(context) // Obtener la puntuación después de detener la grabación
-            audioScore = score // Actualizar el estado con la puntuación obtenida
-            isPlaying = false
-            buttonColor = azul1
-            showProgress = false
-            showPlayback = true
+            progreso = 1f
+            val puntuacion = stopRecording(contexto)
+            puntuacionAudio = puntuacion
+            estaGrabando = false
+            colorBoton = azul1
+            mostrarProgreso = false
+            mostrarReproduccion = true
         }
     }
 
-    // LaunchedEffect to manage the playback progress indicator
-    LaunchedEffect(isPlayingBack) {
-        if (isPlayingBack) {
-            showPlaybackProgress = true
-            val startTime = System.currentTimeMillis()
-            while (System.currentTimeMillis() - startTime < 3000) {
-                playbackProgress = (System.currentTimeMillis() - startTime) / 3000f
+    LaunchedEffect(estaReproduciendo) {
+        if (estaReproduciendo) {
+            mostrarProgresoReproduccion = true
+            val tiempoInicio = System.currentTimeMillis()
+            while (System.currentTimeMillis() - tiempoInicio < 3000) {
+                progresoReproduccion = (System.currentTimeMillis() - tiempoInicio) / 3000f
                 delay(50)
             }
-            playbackProgress = 1f
-            isPlayingBack = false
-            showPlaybackProgress = false
+            progresoReproduccion = 1f
+            estaReproduciendo = false
+            mostrarProgresoReproduccion = false
         }
     }
 
     ModalNavigationDrawer(
-        drawerState = drawerState,
+        drawerState = estadoDrawer,
         drawerContent = {
             Column(
                 modifier = Modifier
@@ -214,10 +220,23 @@ fun HomeScreen(navController: NavController) {
                         },
                         backgroundColor = backgroundOscuro,
                         navigationIcon = {
-                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            IconButton(onClick = { scope.launch { estadoDrawer.open() } }) {
                                 Icon(Icons.Default.Menu, contentDescription = "Menu", tint = Color.White)
                             }
                         },
+                        actions = {
+                            IconButton(onClick = { mostrarTutorial = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = "Tutorial",
+                                    tint = Color.White,
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .clip(CircleShape)
+                                        .background(Color.White.copy(alpha = 0.1f))
+                                )
+                            }
+                        }
                     )
                 },
                 content = { paddingValues ->
@@ -230,17 +249,21 @@ fun HomeScreen(navController: NavController) {
                     ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier.fillMaxSize()
                         ) {
                             Box(
                                 modifier = Modifier
                                     .size(150.dp)
                                     .clip(CircleShape)
-                                    .background(buttonColor)
+                                    .background(colorBoton)
                                     .clickable {
-                                        if (!isPlaying) {
-                                            isPlaying = true
-                                            buttonColor = azul2
+                                        if (!estaGrabando) {
+                                            estaGrabando = true
+                                            colorBoton = azul2
+                                            mostrarReproduccion = false
+                                            mostrarProgreso = true
+                                            puntuacionAudio = null
                                         }
                                     }
                                     .padding(16.dp)
@@ -253,19 +276,19 @@ fun HomeScreen(navController: NavController) {
                                         .background(Color.White, CircleShape),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    if (isPlaying) {
+                                    if (estaGrabando) {
                                         Icon(
                                             imageVector = Icons.Default.Clear,
                                             contentDescription = "Pause",
                                             modifier = Modifier.size(50.dp),
-                                            tint = buttonColor
+                                            tint = colorBoton
                                         )
                                     } else {
                                         Icon(
                                             imageVector = Icons.Default.PlayArrow,
                                             contentDescription = "Play",
                                             modifier = Modifier.size(50.dp),
-                                            tint = buttonColor
+                                            tint = colorBoton
                                         )
                                     }
                                 }
@@ -273,14 +296,14 @@ fun HomeScreen(navController: NavController) {
 
                             Spacer(modifier = Modifier.height(32.dp))
 
-                            AnimatedVisibility(visible = showProgress) {
+                            AnimatedVisibility(visible = mostrarProgreso) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     LinearProgressIndicator(
-                                        progress = progress,
+                                        progress = progreso,
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .padding(horizontal = 32.dp),
-                                        color = buttonColor
+                                        color = colorBoton
                                     )
                                     Text(
                                         text = "Grabando audio...",
@@ -290,14 +313,14 @@ fun HomeScreen(navController: NavController) {
                                 }
                             }
 
-                            AnimatedVisibility(visible = showPlayback) {
+                            AnimatedVisibility(visible = mostrarReproduccion) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Row(horizontalArrangement = Arrangement.SpaceBetween) {
                                         Button(
                                             onClick = {
-                                                isPlayingBack = true
-                                                playRecording(context) {
-                                                    isPlayingBack = false
+                                                estaReproduciendo = true
+                                                playRecording(contexto) {
+                                                    estaReproduciendo = false
                                                 }
                                             },
                                             shape = RoundedCornerShape(4.dp),
@@ -309,22 +332,29 @@ fun HomeScreen(navController: NavController) {
 
                                         Spacer(modifier = Modifier.height(16.dp))
 
-                                        Button(
-                                            onClick = {
-                                                audioScore?.let { score ->
-                                                    enviarPalmada(context, score)
-                                                    Toast.makeText(context, "Palmada Enviada", Toast.LENGTH_SHORT).show()
-                                                }
-                                            },
-                                            shape = RoundedCornerShape(4.dp),
-                                            colors = ButtonDefaults.buttonColors(containerColor = azul2)
-                                        ) {
-                                            Text(text = "Enviar palmada")
+                                        if (aplausoEnviado) {
+                                            Text(
+                                                text = "Palmada subida",
+                                                color = Color.White,
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp)
+                                            )
+                                        } else {
+                                            Button(
+                                                onClick = {
+                                                    puntuacionAudio?.let { puntuacion ->
+                                                        enviarPalmada(contexto, puntuacion)
+                                                        aplausoEnviado = true
+                                                    }
+                                                },
+                                                shape = RoundedCornerShape(4.dp),
+                                                colors = ButtonDefaults.buttonColors(containerColor = azul2)
+                                            ) {
+                                                Text(text = "Subir palmada")
+                                            }
                                         }
                                     }
 
-                                    // Mostrar la puntuación de la palmada
-                                    audioScore?.let {
+                                    puntuacionAudio?.let {
                                         Text(
                                             text = "Puntuación de la palmada: $it",
                                             color = Color.White,
@@ -335,10 +365,10 @@ fun HomeScreen(navController: NavController) {
                                 }
                             }
 
-                            AnimatedVisibility(visible = showPlaybackProgress) {
+                            AnimatedVisibility(visible = mostrarProgresoReproduccion) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     LinearProgressIndicator(
-                                        progress = playbackProgress,
+                                        progress = progresoReproduccion,
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .padding(horizontal = 32.dp),
@@ -353,12 +383,65 @@ fun HomeScreen(navController: NavController) {
                             }
                         }
                     }
+
+                    if (mostrarTutorial) {
+                        AlertDialog(
+                            onDismissRequest = {
+                                pasoTutorial = 0
+                                mostrarTutorial = false
+                            },
+                            title = {
+                                Text(text = "Aprende a utilizar SoundCore", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                            },
+                            text = {
+                                when (pasoTutorial) {
+                                    0 -> PasoTutorial("Bienvenido al tutorial de SoundCore. \n Para un correcto funcionamiento de la app asegúrate de grabar las palmadas a más de 30cm del dispositivo. \n En la pantalla principal verás un botón principal, donde al pulsar se grabará un audio de 3 segundos donde deberás hacer una palmada con tu amigo. \n Una vez hayas terminado se mostrará la puntuación, junto con un botón para escuchar tu palmada y otro para subir la palmada a la red. \n Además podrás acceder al menú lateral donde están los rankings y ver tus mejores marcas, competir con tus amigos o con el mundo entero.",
+                                        R.drawable.tuto01)
+                                    1 -> PasoTutorial("¡Busca a tus amigos en la red! \n Puedes utilizar el buscador para encontrar usuarios y mandarles solicitudes de amistad para empezar a interactuar con ellos.", R.drawable.tuto02)
+                                    2 -> PasoTutorial("¡Interactúa con los demás! \n Agrega a tus amigos y accede a escuchar sus audios, ver sus puntuaciones y participar en el ranking con ellos.", R.drawable.tuto03)
+                                    3 -> PasoTutorial("Tu perfil. \n En este apartado puedes ver toda tu información. Tu colección de palmadas, tus puntuaciones, tus datos, tus amigos etc. También puedes modificar tu nombre de usuario y tu foto de perfil, aceptar o rechazar solicitudes de amistad y acceder a otras opciones desde el apartado de ajustes.", R.drawable.tuto04)
+                                }
+                            },
+                            confirmButton = {
+                                TextButton(
+                                    onClick = {
+                                        if (pasoTutorial < 3) {
+                                            pasoTutorial += 1
+                                        } else {
+                                            pasoTutorial = 0
+                                            mostrarTutorial = false
+                                        }
+                                    }
+                                ) {
+                                    Text(
+                                        text = if (pasoTutorial < 3) "Siguiente" else "Cerrar",
+                                        color = Color.Blue
+                                    )
+                                }
+                            }
+                        )
+                    }
                 }
             )
         }
     )
 }
 
+@Composable
+fun PasoTutorial(descripcion: String, imagenRes: Int) {
+    Column {
+        Text(descripcion)
+        Spacer(modifier = Modifier.height(16.dp))
+        Image(
+            painter = painterResource(id = imagenRes),
+            contentDescription = "Imagen del tutorial",
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .padding(8.dp),
+            contentScale = ContentScale.Inside
+        )
+    }
+}
 @Composable
 fun DrawerItem(text: String, onClick: () -> Unit) {
     Text(

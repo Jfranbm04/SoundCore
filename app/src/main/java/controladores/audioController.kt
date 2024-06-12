@@ -74,7 +74,7 @@ suspend fun stopRecording(context: Context): Int {
     try {
         recorder.stop()
         recorder.reset()
-        Toast.makeText(context, "Grabación exitosa", Toast.LENGTH_SHORT).show()
+//        Toast.makeText(context, "Grabación exitosa", Toast.LENGTH_SHORT).show()
         uploadAudioToFirebase(context)
 
         val maxDecibel = withContext(Dispatchers.IO) {
@@ -228,7 +228,7 @@ fun enviarPalmada(context: Context, puntuacion: Int) {
                 userDocRef.update("listaPalmadas", FieldValue.arrayUnion(uidPalmada))
                     .addOnSuccessListener {
                         Log.d("Firestore", "UID de la palmada añadida a listaPalmadas del usuario")
-                        Toast.makeText(context, "Palmada Enviada", Toast.LENGTH_SHORT).show()
+//                        Toast.makeText(context, "Palmada Enviada", Toast.LENGTH_SHORT).show()
                     }
                     .addOnFailureListener { e ->
                         Log.e("Firestore", "Error al añadir UID de la palmada a listaPalmadas del usuario", e)
