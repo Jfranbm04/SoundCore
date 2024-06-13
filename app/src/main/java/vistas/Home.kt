@@ -37,6 +37,13 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.width
@@ -242,6 +249,8 @@ fun HomeScreen(navController: NavController) {
                             .padding(paddingValues),
                         contentAlignment = Alignment.Center
                     ) {
+                        OndasDeFondo(visible = estaGrabando, modifier = Modifier.fillMaxSize())
+
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center,
@@ -437,6 +446,7 @@ fun PasoTutorial(descripcion: String, imagenRes: Int) {
         )
     }
 }
+
 @Composable
 fun DrawerItem(text: String, onClick: () -> Unit) {
     Text(
@@ -448,4 +458,37 @@ fun DrawerItem(text: String, onClick: () -> Unit) {
         color = Color.White,
         fontWeight = FontWeight.Bold
     )
+}
+
+// Función para controlar las animaciones al pulsar el botón
+@Composable
+fun OndasDeFondo(
+    visible: Boolean,
+    modifier: Modifier = Modifier
+) {
+    if (visible) {
+        val infiniteTransition = rememberInfiniteTransition()
+        val scale by infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1.5f, // tamaño máximo de las ondas
+            animationSpec = infiniteRepeatable(
+                animation = tween(1000, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart
+            )
+        )
+        val alpha by infiniteTransition.animateFloat(
+            initialValue = 0.5f,
+            targetValue = 0f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1000, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart
+            )
+        )
+        Canvas(modifier = modifier) {
+            drawCircle(
+                color = azul2.copy(alpha = alpha),
+                radius = (size.minDimension / 2) * scale // Ajusta el radio de las ondas
+            )
+        }
+    }
 }
