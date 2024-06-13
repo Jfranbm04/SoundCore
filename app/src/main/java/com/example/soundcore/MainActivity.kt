@@ -16,7 +16,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import com.example.soundcore.ui.theme.SoundCoreTheme
-import com.example.soundcore.ui.theme.azul3
 import com.example.soundcore.ui.theme.backgroundClaro
 import com.example.soundcore.ui.theme.backgroundOscuro
 import com.google.firebase.auth.FirebaseAuth

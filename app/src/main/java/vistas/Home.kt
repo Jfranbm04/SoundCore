@@ -35,7 +35,6 @@ import kotlinx.coroutines.delay
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -65,13 +64,9 @@ import controladores.playRecording
 import controladores.startRecording
 import controladores.stopRecording
 import kotlinx.coroutines.launch
-import android.content.Context
-import android.content.SharedPreferences
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
-import java.util.Calendar
-import java.util.concurrent.TimeUnit
 
 
 /*
@@ -415,7 +410,7 @@ fun HomeScreen(navController: NavController) {
                                 ) {
                                     Text(
                                         text = if (pasoTutorial < 3) "Siguiente" else "Cerrar",
-                                        color = Color.White
+                                        color = Color.Black
                                     )
                                 }
                             }

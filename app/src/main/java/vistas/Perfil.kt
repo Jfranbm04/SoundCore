@@ -1,11 +1,8 @@
 package vistas
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,29 +48,21 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.soundcore.R
 import com.example.soundcore.ui.theme.azul1
-import com.example.soundcore.ui.theme.azul2
-import com.example.soundcore.ui.theme.azul3
-import com.example.soundcore.ui.theme.azul4
 import com.example.soundcore.ui.theme.backgroundClaro
 import com.example.soundcore.ui.theme.backgroundOscuro
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
 import controladores.descargarImagen
 import controladores.obtenerAudiosUsuario
 import controladores.obtenerDatosUsuario
 import controladores.obtenerNumeroSolicitudes
 import controladores.obtenerUrlFotoPerfil
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import modelos.AudioCard
-import modelos.Paths
 
 
 

@@ -39,7 +39,6 @@ import modelos.AudioCard
 
 @Composable
 fun RankingAmigosScreen(navController: NavController) {
-    val context = LocalContext.current
     val user = FirebaseAuth.getInstance().currentUser
     var audios by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }

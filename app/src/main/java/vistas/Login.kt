@@ -1,12 +1,7 @@
 package vistas
 
-import android.content.Intent
-import android.graphics.drawable.Icon
-import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -54,16 +48,11 @@ import androidx.core.util.PatternsCompat
 import androidx.navigation.NavController
 import com.example.soundcore.R
 import com.example.soundcore.ui.theme.azul1
-import com.example.soundcore.ui.theme.azul2
-import com.example.soundcore.ui.theme.azul3
 import com.example.soundcore.ui.theme.azul4
-
-import com.google.firebase.auth.FirebaseAuth
 import controladores.comprobarLogin
-import controladores.comprobarRegistro
 import modelos.Paths
 
-private lateinit var auth: FirebaseAuth
+// private lateinit var auth: FirebaseAuth
 
 @Composable
 fun LoginScreen(navController: NavController) {
@@ -75,7 +64,6 @@ fun LoginScreen(navController: NavController) {
     ) {
         Header(Modifier.align(Alignment.TopCenter), navController)
         Spacer(modifier = Modifier.height(50.dp))
-        //Body(Modifier.align(Alignment.Center))
     }
 }
 
@@ -95,14 +83,13 @@ fun logo(navController: NavController) {
             painter = painterResource(id = R.drawable.soundcore_logo),
             contentDescription = null,
             modifier = Modifier
-                .size(150.dp) // Tamaño de la imagen
+                .size(150.dp)
                 .align(alignment = Alignment.CenterHorizontally)
         )
 
         Spacer(modifier = Modifier.height(30.dp))
         headerLogin()
         Spacer(modifier = Modifier.height(20.dp))
-        // Divider con padding
         Divider(
             color = Color.Gray,
             modifier = Modifier
@@ -147,7 +134,7 @@ fun correoContraseña(navController: NavController) {
 
 
 
-// Funcion para registro (texto clickable)
+// Funcion para registro
 @Composable
 fun SignUpText(navController: NavController) {
     val annotatedString = buildAnnotatedString {
@@ -235,7 +222,7 @@ fun Password(password: String, onTextChanged: (String) -> Unit) {
             val icon: Painter = if (showPassword) {
                 painterResource(id = R.drawable.visibility) // ojo abierto
             } else {
-                painterResource(id = R.drawable.visibility_off) // ojo cerrado
+                painterResource(id = R.drawable.visibility_off_2) // ojo cerrado
             }
             Icon(
                 painter = icon,

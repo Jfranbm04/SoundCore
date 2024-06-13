@@ -36,11 +36,9 @@ import com.google.firebase.auth.FirebaseAuth
 import controladores.obtenerAudiosUsuario
 import controladores.ordenarAudiosPorPuntuacion
 import modelos.AudioCard
-import modelos.UsuarioCard
 
 @Composable
 fun RankingLocalScreen(navController: NavController) {
-    val context = LocalContext.current
     val user = FirebaseAuth.getInstance().currentUser
     var audios by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }

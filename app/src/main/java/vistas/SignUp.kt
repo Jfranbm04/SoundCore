@@ -218,7 +218,7 @@ fun camposRegistro(navController: NavController) {
                 val icon: Painter = if (showPassword) {
                     painterResource(id = R.drawable.visibility)
                 } else {
-                    painterResource(id = R.drawable.visibility_off)
+                    painterResource(id = R.drawable.visibility_off_2)
                 }
                 Icon(
                     painter = icon,

@@ -3,13 +3,10 @@ package vistas
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import android.util.Log
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,9 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Scaffold
 import androidx.compose.material.TextField
 import androidx.compose.material.TopAppBar
@@ -45,7 +39,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -58,13 +51,10 @@ import com.example.soundcore.ui.theme.azul4
 import com.example.soundcore.ui.theme.backgroundOscuro
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
 import controladores.descargarImagen
 import controladores.obtenerDatosUsuario
 import controladores.subirFotoPerfil
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import modelos.Paths
 
 @Composable
 fun EditarPerfilScreen(navController: NavController) {
@@ -72,7 +62,6 @@ fun EditarPerfilScreen(navController: NavController) {
     val auth = FirebaseAuth.getInstance()
     val user = auth.currentUser
     val db = FirebaseFirestore.getInstance()
-    val storage = FirebaseStorage.getInstance()
     val uid = user?.uid
 
     var nombreUsuario by remember { mutableStateOf(TextFieldValue("")) }

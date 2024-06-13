@@ -1,6 +1,5 @@
 package controladores
 
-import android.content.ContentValues
 import android.content.Context
 import android.media.MediaRecorder
 import android.util.Log
@@ -8,12 +7,7 @@ import android.widget.Toast
 import java.io.IOException
 import android.media.MediaPlayer
 import android.net.Uri
-import android.os.Build
-import android.os.CountDownTimer
-import android.provider.MediaStore
 import java.io.File
-import kotlin.math.log10
-import android.media.MediaMetadataRetriever
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
 import com.arthenica.ffmpegkit.FFmpegKit
@@ -23,17 +17,11 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 
 
-/*
-Cuando se pulse el botón enviar palmada, vamos a añadir:
-- un registro en la tabla Palmadas con los campos UIDUsuario, nombreAudio (es el nombre del campo del tipo audiorecord_1717453296829.3gP que se almacena en firebase storage en la carpeta audios), puntuación.
- - un registro en la listaPalmadas con el UID de la palmada, sacada de la tabla Palmadas
-*/
 
 
 
@@ -74,9 +62,6 @@ suspend fun stopRecording(context: Context): Int {
     try {
         recorder.stop()
         recorder.reset()
-//        Toast.makeText(context, "Grabación exitosa", Toast.LENGTH_SHORT).show()
-        uploadAudioToFirebase(context)
-
         val maxDecibel = withContext(Dispatchers.IO) {
             obtenerMaxDecibelio(context)
         }
@@ -155,7 +140,7 @@ fun stopPlaying() {
 
 
 
-// Método que saca el decibelio máximo (sacado de internet)
+// Método que saca el decibelio máximo
 suspend fun obtenerMaxDecibelio(context: Context): Double {
     val command = "-i $outputFile -filter:a volumedetect -f null /dev/null"
 
@@ -184,10 +169,9 @@ suspend fun obtenerMaxDecibelio(context: Context): Double {
     return deferred.await()
 }
 
-// Define la función normalizeDecibel
 fun normalizeDecibel(decibel: Double): Int {
 //    Establezco los valores para hacer el rango de puntuación
-    val minDb = -40.0
+    val minDb = -50.0
     val maxDb = 0.0
     val range = maxDb - minDb
 
@@ -342,7 +326,7 @@ suspend fun eliminarPalmadasUsuario(context: Context) {
 
             // Actualizar el documento del usuario para eliminar la lista de palmadas
             firestore.collection("usuarios").document(uidUsuario).update("listaPalmadas", emptyList<String>()).await()
-
+            Toast.makeText(context, "Palmadas eliminadas", Toast.LENGTH_SHORT).show()
             Log.d("Firestore", "Se han eliminado todas las palmadas")
         } catch (e: Exception) {
             Log.e("Firestore", "Error eliminando palmadas del usuario", e)

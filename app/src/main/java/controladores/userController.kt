@@ -3,17 +3,12 @@ package controladores
 import android.content.ContentValues.TAG
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
 import com.google.firebase.auth.FirebaseAuth
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import android.provider.Settings.Global.getString
 import androidx.navigation.NavController
-import com.example.soundcore.R
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
@@ -245,7 +240,7 @@ fun aceptarSolicitudDeAmistad(uidRemitente: String, uidDestinatario: String, onC
                 firestore.collection("solicitudes").document(document.id).delete()
                     .addOnSuccessListener {
                         Log.d(TAG, "Solicitud de amistad eliminada")
-                        onComplete() // Llamar al callback después de completar
+                        onComplete()
                     }
                     .addOnFailureListener { e ->
                         Log.e(TAG, "Error al eliminar la solicitud de amistad", e)
@@ -269,7 +264,7 @@ fun rechazarSolicitudDeAmistad(uidRemitente: String, uidDestinatario: String, on
                 firestore.collection("solicitudes").document(document.id).delete()
                     .addOnSuccessListener {
                         Log.d(TAG, "Solicitud de amistad rechazada")
-                        onComplete() // Llamar al callback después de completar
+                        onComplete()
                     }
                     .addOnFailureListener { e ->
                         Log.e(TAG, "Error al rechazar la solicitud de amistad", e)
@@ -365,13 +360,13 @@ suspend fun eliminarCuenta(context: Context, navController: NavController) {
             // Eliminar el documento del usuario en Firestore
             firestore.collection("usuarios").document(uidUsuario).delete().await()
 
-            // Eliminar el usuario de Firebase Authentication
+            // Eliminar el usuario de Firebase Auth
             user.delete().await()
 
             Log.d("Firestore", "Cuenta de usuario eliminada correctamente")
             Toast.makeText(context, "Cuenta eliminada correctamente", Toast.LENGTH_SHORT).show()
 
-            // Navegar a la pantalla de inicio de sesión
+            // Ir a la pantalla de inicio de sesión
             navController.navigate(Paths.login.path) {
                 popUpTo(0) { inclusive = true }
             }
@@ -393,7 +388,7 @@ suspend fun sonAmigos(uidUsuario1: String, uidUsuario2: String): Boolean {
         val listaAmigos = usuario1Doc.get("listaAmigos") as? List<String>
         listaAmigos?.contains(uidUsuario2) == true
     } catch (e: Exception) {
-        Log.e("Firestore", "Error comprobando la amistad entre usuarios", e)
+        Log.e("Firestore", "Error comprobando si son amigos", e)
         false
     }
 }
@@ -406,10 +401,10 @@ fun eliminarAmigo(uidActual: String, uidAmigo: String) {
     val actualRef = firestore.collection("usuarios").document(uidActual)
     actualRef.update("listaAmigos", FieldValue.arrayRemove(uidAmigo))
         .addOnSuccessListener {
-            Log.d("UserController", "Amigo eliminado de la lista del usuario actual")
+            Log.d("UserController", "Amigo eliminado de la lista")
         }
         .addOnFailureListener { e ->
-            Log.e("UserController", "Error al eliminar amigo de la lista del usuario actual", e)
+            Log.e("UserController", "Error al eliminar amigo de la lista", e)
         }
 
     // Remover uidActual de la lista de amigos de uidAmigo

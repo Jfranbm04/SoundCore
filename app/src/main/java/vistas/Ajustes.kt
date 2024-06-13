@@ -1,6 +1,5 @@
 package vistas
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
@@ -17,13 +15,9 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -40,10 +34,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.soundcore.ui.theme.azul1
-import com.example.soundcore.ui.theme.azul1
-import com.example.soundcore.ui.theme.azul3
-import com.example.soundcore.ui.theme.azul4
-import com.example.soundcore.ui.theme.backgroundClaro
 import com.example.soundcore.ui.theme.backgroundOscuro
 import com.google.firebase.auth.FirebaseAuth
 import controladores.eliminarCuenta
@@ -58,7 +48,6 @@ fun AjustesScreen(navController: NavController) {
     var showDialog by remember { mutableStateOf(false) }
     var dialogMessage by remember { mutableStateOf("") }
     var onConfirmAction by remember { mutableStateOf({}) }
-    var isDarkTheme by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -93,7 +82,7 @@ fun AjustesScreen(navController: NavController) {
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 32.dp) // Aquí agregas el padding bottom
+                        .padding(bottom = 32.dp)
                 ) {
                     // Botón para cerrar sesión
                     Button(
@@ -124,7 +113,6 @@ fun AjustesScreen(navController: NavController) {
                                 onConfirmAction = {
                                     coroutineScope.launch {
                                         eliminarPalmadasUsuario(context)
-                                        Toast.makeText(context, "Palmadas eliminadas", Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             },

@@ -40,7 +40,6 @@ import modelos.AudioCard
 
 @Composable
 fun RankingGlobalScreen(navController: NavController) {
-    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var topPalmadas by remember { mutableStateOf<List<Map<String, Any>>?>(null) }
 
@@ -89,7 +88,7 @@ fun RankingGlobalScreen(navController: NavController) {
                         }
                     }
                 } ?: run {
-                    CircularProgressIndicator(color = backgroundOscuro)
+                    CircularProgressIndicator(color = backgroundOscuro, modifier = Modifier.align(Alignment.Center))
                 }
             }
         }
