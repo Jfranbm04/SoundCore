@@ -22,11 +22,6 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 
 
-
-
-
-
-
 // Variables globales para almacenar el archivo de salida y el nombre del archivo.
 
 private val recorder = MediaRecorder()
@@ -171,7 +166,7 @@ suspend fun obtenerMaxDecibelio(context: Context): Double {
 
 fun normalizeDecibel(decibel: Double): Int {
 //    Establezco los valores para hacer el rango de puntuación
-    val minDb = -50.0
+    val minDb = -30.0
     val maxDb = 0.0
     val range = maxDb - minDb
 
