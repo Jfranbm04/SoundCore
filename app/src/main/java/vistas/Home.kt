@@ -81,7 +81,7 @@ Cuando se pulse el botón enviar palmada, vamos a añadir:
     - un registro en la tabla Palmadas con los campos UIDUsuario, nombreAudio (es el nombre del campo del tipo audiorecord_1717453296829.3gP que se almacena en firebase storage en la carpeta audios), puntuación.
     - un registro en la listaPalmadas con el UID de la palmada, sacada de la tabla Palmadas
 */
-// Utilizo FFmpegKit para el trato de audio / MediaCodec y TarsosDSP
+// Utilizo FFmpegKit para el trato de audio
 
 
 
